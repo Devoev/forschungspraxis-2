@@ -28,7 +28,7 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, f, bc)
 
     % Berechnung Systemmatrix A und rechte Seite rhs
     idx = setdiff(1:3*np, getGhostEdges(msh));
-    AF = st*mmui*g + omega^2*meps;
+    AF = c'*mmui*c + omega^2*meps;
     A = AF(idx, idx);
     rhs = 1j*omega*jsbow(idx);
 
