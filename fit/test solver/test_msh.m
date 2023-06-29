@@ -55,5 +55,6 @@ ibov = reshape(real(ebow*exp(-1i*omega)),[msh.nx, msh.ny]);
 imagesc(ibov)
 colorbar
 
-
-
+[X,Y] = meshgrid(msh.xmesh, msh.ymesh);
+h = surf(X,Y,ibov)
+set(h,'LineStyle','none')
