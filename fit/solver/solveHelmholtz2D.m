@@ -1,4 +1,15 @@
-function [ebow, relRes] = solveMQSF(msh, eps, mui, jsbow, f, bc)
+function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, f, bc)
+% SOLVE_HELMHOLTZ_2D Solves the 2D Helmholtz equation.
+% Inputs:
+%   msh     - Mesh struct.
+%   eps     - Permittivity values.
+%   mui     - Reluctivity values.
+%   jsbow   - Integrated current excitation.
+%   f       - Excitation frequency.
+%   bc      - Boundary conditions.
+% Outputs:
+%   ebow    - Integrated electric field.
+%   hbow    - Integrated magnetic field.
 
     % Anzahl der Rechenpunkte des Gitters
     np = msh.np;
@@ -33,5 +44,7 @@ function [ebow, relRes] = solveMQSF(msh, eps, mui, jsbow, f, bc)
     end
     relRes = resVec./norm(rhs);
 
-    % TODO: post processing
+    # Post processing
+    bbow = -c*ebow / (1i*omega);
+    hbow = mmui*bbow;
 end
