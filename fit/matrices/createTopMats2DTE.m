@@ -9,6 +9,13 @@
 %   st          Duale Source-Matrix
 
 function [c, g, st]=createTopMats2DTE(msh)
+% CREATE_TOP_MATS_2DTE Creates the topological matrices in the 2D TE case.
+% Inputs:
+%   msh  - Mesh struct.
+% Outputs:
+%   c    - Curl matrix.
+%   g    - Grad matrix.
+%   st   - Dual source matrix.
    
     np=msh.np;
     px=createPx(np);
@@ -26,6 +33,11 @@ function [c, g, st]=createTopMats2DTE(msh)
 end
 
 function px=createPx(np)
+% CREATE_PX Creates the Px matrix.
+% Inputs:
+%   np  - Number of points in the grid.
+% Outputs:
+%   px  - Px matrix
     
     row=[1:np,1:(np-1)];
     column=[1:np,2:np];
@@ -35,6 +47,11 @@ function px=createPx(np)
 end
 
 function py=createPy(np, nx)
+% CREATE_PY Creates the Py matrix.
+% Inputs:
+%   np  - Number of points in the grid.
+% Outputs:
+%   py  - Py matrix
     
     row=[1:np,1:(np-nx)];
     column=[1:np,1+nx:np];

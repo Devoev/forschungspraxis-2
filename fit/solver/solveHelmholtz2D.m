@@ -14,8 +14,7 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, f, bc)
     % Anzahl der Rechenpunkte des Gitters
     np = msh.np;
 
-    % TODO: 2D top matrices
-    [c, s, st] = createTopMats(msh);
+    [c, g, st] = createTopMats2DTE(msh);
 
     % TODO: 2D geometry matrices
     [ds, dst, da, dat] = createGeoMats(msh);
@@ -29,7 +28,7 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, f, bc)
 
     % Berechnung Systemmatrix A und rechte Seite rhs
     idx = setdiff(1:3*np, getGhostEdges(msh));
-    AF = -st*mmui*st' + omega^2*meps;
+    AF = st*mmui*g + omega^2*meps;
     A = AF(idx, idx);
     rhs = 1j*omega*jsbow(idx);
 
