@@ -16,10 +16,11 @@ elm = 100;
 eps = 8.854e-12;
 mui = 1/(4*pi*1e-7);
 
+d = 200; % "Gitter-Abstand"
 jsbow = sparse(msh.np, 1);
 % jsbow(2000*2000/2 - 1000,1) = 1000;
-jsbow(1,1) = 1000;
-jsbow(20*elm,1) = 1000;
+jsbow(10*elm - d,1) = 1000;
+jsbow(10*elm + d,1) = 1000;
 
 ebow = solveHelmholtz2D(msh, eps, mui, jsbow, omega, 0);
 
@@ -36,3 +37,8 @@ figure
 [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
 h = surf(X,Y,ibov);
 set(h,'LineStyle','none')
+
+figure
+
+intensity = ibov(:,end);
+plot(1:length(intensity), intensity)
