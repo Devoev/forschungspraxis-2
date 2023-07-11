@@ -3,7 +3,7 @@ path_msh_func = '..\mesh';
 
 path_mat_func = '..\matrices'
 
-f = 1e6;
+f = 1.5e7;
 
 
 
@@ -11,7 +11,7 @@ f = 1e6;
 addpath(path_msh_func, path_mat_func)
 
 
- elm = 100;
+elm = 100;
 
 [ msh ] = cartMesh2D( linspace(1,elm,20*elm), linspace(1,elm,20*elm) );
 
@@ -28,8 +28,15 @@ np = msh.np;
 
 
 % TODO: 2D material matrices
-meps = 8.854e-12 * speye(msh.np, msh.np);
-mmui = 1/(4*pi*1e-7) * speye(2*msh.np, 2*msh.np);
+[ds, dst, da, dat] = createGeoMats2D(msh);
+
+eps = 8.854e-12;
+mui = 1/(4*pi*1e-7);
+meps = create2DMeps(msh, ds, da, dat, eps);
+mmui = create2DMmui(msh, ds, dst, da, mui);
+
+%meps = 8.854e-12 * speye(msh.np, msh.np);
+%mmui = 1/(4*pi*1e-7) * speye(2*msh.np, 2*msh.np);
 
 % Berechnung der Kreisfrequenz
 omega = 2*pi*f;
@@ -55,6 +62,8 @@ ibov = reshape(real(ebow*exp(-1i*omega)),[msh.nx, msh.ny]);
 imagesc(ibov)
 colorbar
 
+figure
+
 [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-h = surf(X,Y,ibov)
+h = surf(X,Y,ibov);
 set(h,'LineStyle','none')

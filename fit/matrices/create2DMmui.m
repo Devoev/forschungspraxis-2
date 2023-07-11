@@ -88,6 +88,8 @@ function mmui = create2DMmui(msh, ds, dst, da, mui, bc)
     
     
     % geometrische Matritzen ranmuliplizieren
-    mmui = dst * spdiags(dmui,0,2*np,2*np) * nullInv(da);
-    
+    dstxy = dst(1:2*np, 1:2*np);
+    daxy = da(1:2*np, 1:2*np);
+    mmui = dstxy * spdiags(dmui,0,2*np,2*np) * nullInv(daxy);
+
 end
