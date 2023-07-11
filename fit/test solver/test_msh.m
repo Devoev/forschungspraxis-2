@@ -13,6 +13,7 @@ elm = 100;
 
 [ msh ] = cartMesh2D( linspace(1,elm,20*elm), linspace(1,elm,20*elm) );
 
+
 eps = 8.854e-12;
 mui = 1/(4*pi*1e-7);
 
