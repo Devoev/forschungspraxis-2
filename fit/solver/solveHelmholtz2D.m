@@ -1,11 +1,11 @@
-function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, f, bc)
+function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc)
 % SOLVE_HELMHOLTZ_2D Solves the 2D Helmholtz equation.
 % Inputs:
 %   msh     - Mesh struct.
 %   eps     - Permittivity values.
 %   mui     - Reluctivity values.
 %   jsbow   - Integrated current excitation.
-%   f       - Excitation frequency.
+%   omega   - Radial excitation frequency.
 %   bc      - Boundary conditions.
 % Outputs:
 %   ebow    - Integrated electric field.
@@ -19,13 +19,12 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, f, bc)
     [ds, dst, da, dat] = createGeoMats2D(msh);
 
     meps = create2DMeps(msh, ds, da, dat, eps);
+    msig = create2DMeps(msh, ds, da, dat, 1e-4); % TODO: Remove later
     mmui = create2DMmui(msh, ds, dst, da, mui);
 
-    % Berechnung der Kreisfrequenz
-    omega = 2*pi*f;
-
     % Berechnung Systemmatrix A und rechte Seite rhs
-    A = -c'*mmui*c + omega^2*meps;
+%    A = -c'*mmui*c + omega^2*meps;
+    A = -c'*mmui*c + omega^2*meps - 1j*omega*msig;
     rhs = 1j*omega*jsbow;
 
     % solve equation
