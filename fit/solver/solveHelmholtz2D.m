@@ -16,32 +16,27 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, f, bc)
 
     [c, g, st] = createTopMats2DTE(msh);
 
-    % TODO: 2D geometry matrices
-    [ds, dst, da, dat] = createGeoMats(msh);
+    [ds, dst, da, dat] = createGeoMats2D(msh);
 
-    % TODO: 2D material matrices
-    meps = createMeps(msh, ds, da, dat, eps, bc);
-    mmui = createMmui(msh, ds, dst, da, mui, bc);
+    meps = create2DMeps(msh, ds, da, dat, eps);
+    mmui = create2DMmui(msh, ds, dst, da, mui);
 
     % Berechnung der Kreisfrequenz
     omega = 2*pi*f;
 
     % Berechnung Systemmatrix A und rechte Seite rhs
-    idx = setdiff(1:3*np, getGhostEdges(msh));
-    AF = -c'*mmui*c + omega^2*meps;
-    A = AF(idx, idx);
-    rhs = 1j*omega*jsbow(idx);
+    A = -c'*mmui*c + omega^2*meps;
+    rhs = 1j*omega*jsbow;
 
     % solve equation
-    ebow = zeros(np, 1);
-    [ebow_deflate, flag, relRes, iter, resVec] = gmres(A, rhs, 20, 1e-10, 1000); % TODO: direct vs iteratve?
-    ebow(idx) = ebow_deflate;
-    if flag == 0
-      fprintf('gmres(20): converged at iteration %2d to a solution with relative residual %d.\n',iter,relRes);
-    else
-      error('gmres(20): some error ocurred, please check flag output.')
-    end
-    relRes = resVec./norm(rhs);
+%    [ebow, flag, relRes, iter, resVec] = gmres(A, rhs, 20, 1e-10, 1000); % TODO: direct vs iteratve?
+%    if flag == 0
+%      fprintf('gmres(20): converged at iteration %2d to a solution with relative residual %d.\n',iter,relRes);
+%    else
+%      error('gmres(20): some error ocurred, please check flag output.')
+%    end
+%    relRes = resVec./norm(rhs);
+    ebow = A\rhs;
 
     % Post processing
     bbow = -c*ebow / (1i*omega);
