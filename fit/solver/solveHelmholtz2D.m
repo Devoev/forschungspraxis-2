@@ -28,8 +28,8 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc
 
     % UPML tensoren - TM mode
     [sx, sy] = calcpml2D(NGRID, NPML);
-    sx_v = flip(reshape((sx).',1,[]))';
-    sy_v = flip(reshape((sx).',1,[]))';
+    sx_v = reshape(flip(sx).',1,[])';
+    sy_v = reshape(flip(sy).',1,[])';
     s_mmui = sparse(diag([sy_v./sx_v; sx_v./sy_v]));
     s_eps = sparse(diag(sx_v.*sy_v));
 
