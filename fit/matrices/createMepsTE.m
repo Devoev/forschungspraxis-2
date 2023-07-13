@@ -85,8 +85,6 @@ function meps = createMepsTE(msh, ds, da, dat, eps, bc)
         end
     end
 
-    dsz = ds(2*np+1:end, 2*np+1:end);
-    datz = dat(2*np+1:end, 2*np+1:end);
-    meps = datz*deps*nullInv(dsz);
+    meps = dat*deps*nullInv(ds);
 
 end

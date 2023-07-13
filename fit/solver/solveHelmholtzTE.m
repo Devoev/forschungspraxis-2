@@ -1,5 +1,5 @@
-function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc)
-% SOLVE_HELMHOLTZ_2D Solves the 2D Helmholtz equation.
+function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, bc)
+% SOLVE_HELMHOLTZ_TE Solves the 2D Helmholtz equation in the TE case.
 %
 % Inputs:
 %   msh     - Mesh struct.
@@ -13,19 +13,15 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc
 %   ebow    - Integrated electric field.
 %   hbow    - Integrated magnetic field.
 
-    % Anzahl der Rechenpunkte des Gitters
-    np = msh.np;
-
     % UPML setting
     NGRID = [msh.nx, msh.ny];
     NPML = [20, 20];            % 20er breite der pml layer
 
-    [c, g, st] = createTopMatsTE(msh);
+    [c, ~, ~] = createTopMatsTE(msh);
 
-    [ds, dst, da, dat] = createGeoMats2D(msh);
+    [ds, dst, da, dat] = createGeoMatsTE(msh);
 
     meps = createMepsTE(msh, ds, da, dat, eps);
-    msig = createMepsTE(msh, ds, da, dat, 1e-4); % TODO: Remove later
     mmui = createMmuiTE(msh, ds, dst, da, mui);
 
     % UPML tensoren - TM mode
@@ -35,10 +31,12 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc
     s_mmui = sparse(diag([sy_v./sx_v; sx_v./sy_v]));
     s_eps = sparse(diag(sx_v.*sy_v));
 
-    % Berechnung Systemmatrix A und rechte Seite rhs
-    % Durch UPML sollte sigma entfallen ... ~Alex
-%    A = -c'*mmui*c + omega^2*meps;
-    A = -c'*mmui*s_mmui*c + omega^2*meps*s_eps; %- 1j*omega*msig;
+    % UPML material matrices
+    meps = meps*s_eps; % TODO: Move to bc in createMeps/createMmui
+    mmui = mmui*s_mmui;
+
+    % System matrix and rhs
+    A = -c'*mmui*c + omega^2*meps;
     rhs = 1j*omega*jsbow;
 
     % solve equation

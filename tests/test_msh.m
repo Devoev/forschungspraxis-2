@@ -2,9 +2,10 @@
 path_msh_func = '..\fit\mesh';
 path_mat_func = '..\fit\matrices';
 path_solver_func = '..\fit\solver';
+path_util_func = '..\fit\util';
 
 % Add paths
-addpath(path_msh_func, path_mat_func, path_solver_func)
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 f = 50e6;
 omega = 2*pi*f;
@@ -22,7 +23,7 @@ jsbow = sparse(msh.np, 1);
 jsbow(10*elm - d,1) = 1000;
 jsbow(10*elm + d,1) = 1000;
 
-ebow = solveHelmholtz2D(msh, eps, mui, jsbow, omega, 0);
+ebow = solveHelmholtzTE(msh, eps, mui, jsbow, omega, 0);
 
 ibov = reshape(real(ebow*exp(-1i*omega)),[msh.nx, msh.ny]);
 
