@@ -1,21 +1,13 @@
-% Erzeugt die topologischen Matrizen für ein kanonisches Gitter.
+function [c, g, st] = createTopMatsTE(msh)
+% CREATE_TOP_MATS_TE Creates the topological matrices in the 2D TE case.
 %
-%   Eingabe
-%   msh         Kanonisches Gitter
-%
-%   Rückgabe
-%   c           Curl-Matrix
-%   s           Source-Matrix
-%   st          Duale Source-Matrix
-
-function [c, g, st]=createTopMats2DTE(msh)
-% CREATE_TOP_MATS_2DTE Creates the topological matrices in the 2D TE case.
 % Inputs:
 %   msh  - Mesh struct.
+%
 % Outputs:
-%   c    - Curl matrix.
-%   g    - Grad matrix.
-%   st   - Dual source matrix.
+%   c    - Curl matrix of size (2np,np).
+%   g    - Grad matrix of size (2np,np).
+%   st   - Dual source matrix of size (np,2np).
    
     np=msh.np;
     px=createPx(np);
@@ -32,12 +24,14 @@ function [c, g, st]=createTopMats2DTE(msh)
 
 end
 
-function px=createPx(np)
+function px = createPx(np)
 % CREATE_PX Creates the Px matrix.
+%
 % Inputs:
 %   np  - Number of points in the grid.
+%
 % Outputs:
-%   px  - Px matrix
+%   px  - Px matrix of size (np,np).
     
     row=[1:np,1:(np-1)];
     column=[1:np,2:np];
@@ -46,12 +40,14 @@ function px=createPx(np)
 
 end
 
-function py=createPy(np, nx)
+function py = createPy(np, nx)
 % CREATE_PY Creates the Py matrix.
+%
 % Inputs:
 %   np  - Number of points in the grid.
+%
 % Outputs:
-%   py  - Py matrix
+%   py  - Py matrix of size (np,np).
     
     row=[1:np,1:(np-nx)];
     column=[1:np,1+nx:np];

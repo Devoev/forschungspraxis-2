@@ -1,16 +1,14 @@
-% Erzeugt die geometrischen Matrizen für ein kanonisches
-% kartesisches Gitter.
+function [ds, dst, da, dat] = createGeoMats2D(msh)
+% CREATE_GEO_MATS_2D Creates the geometrical matrices in the 2D case.
 %
-%   Eingabe
-%   msh         Kanonisches kartesisches Gitter
+% Inputs:
+%   msh - Mesh struct.
 %
-%   Rückgabe
-%   ds          Primäre Kanten-Matrix
-%   dst         Duale Kanten-Matrix
-%   da          Primäre Flächen-Matrix
-%   dat         Duale Flächen-Matrix
-
-function [ds, dst, da, dat] = createGeoMats(msh)
+%  Outputs:
+%   ds  - Primary edge matrix.
+%   dst - Dual edge matrix.
+%   da  - Primary area matrix.
+%   dat - Dual area matrix.
 
     nx = msh.nx;
     ny = msh.ny;

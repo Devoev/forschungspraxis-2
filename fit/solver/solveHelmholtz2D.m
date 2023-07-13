@@ -1,5 +1,6 @@
 function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc)
 % SOLVE_HELMHOLTZ_2D Solves the 2D Helmholtz equation.
+%
 % Inputs:
 %   msh     - Mesh struct.
 %   eps     - Permittivity values.
@@ -7,6 +8,7 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc
 %   jsbow   - Integrated current excitation.
 %   omega   - Radial excitation frequency.
 %   bc      - Boundary conditions.
+%
 % Outputs:
 %   ebow    - Integrated electric field.
 %   hbow    - Integrated magnetic field.
@@ -18,13 +20,13 @@ function [ebow, hbow, relRes] = solveHelmholtz2D(msh, eps, mui, jsbow, omega, bc
     NGRID = [msh.nx, msh.ny];
     NPML = [20, 20];            % 20er breite der pml layer
 
-    [c, g, st] = createTopMats2DTE(msh);
+    [c, g, st] = createTopMatsTE(msh);
 
     [ds, dst, da, dat] = createGeoMats2D(msh);
 
-    meps = create2DMeps(msh, ds, da, dat, eps);
-    msig = create2DMeps(msh, ds, da, dat, 1e-4); % TODO: Remove later
-    mmui = create2DMmui(msh, ds, dst, da, mui);
+    meps = createMepsTE(msh, ds, da, dat, eps);
+    msig = createMepsTE(msh, ds, da, dat, 1e-4); % TODO: Remove later
+    mmui = createMmuiTE(msh, ds, dst, da, mui);
 
     % UPML tensoren - TM mode
     [sx, sy] = calcpml2D(NGRID, NPML);
