@@ -5,10 +5,10 @@ function [ds, dst, da, dat] = createGeoMats2D(msh)
 %   msh - Mesh struct.
 %
 %  Outputs:
-%   ds  - Primary edge matrix.
-%   dst - Dual edge matrix.
-%   da  - Primary area matrix.
-%   dat - Dual area matrix.
+%   ds  - Primary edge matrix of size (3np,3np).
+%   dst - Dual edge matrix of size (3np,3np).
+%   da  - Primary area matrix of size (3np,3np).
+%   dat - Dual area matrix of size (3np,3np).
 
     nx = msh.nx;
     ny = msh.ny;

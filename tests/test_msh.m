@@ -1,8 +1,7 @@
 % Path mesh functions
-path_msh_func = '..\mesh';
-
-path_mat_func = '..\matrices';
-path_solver_func = '..\solver';
+path_msh_func = '..\fit\mesh';
+path_mat_func = '..\fit\matrices';
+path_solver_func = '..\fit\solver';
 
 % Add paths
 addpath(path_msh_func, path_mat_func, path_solver_func)
