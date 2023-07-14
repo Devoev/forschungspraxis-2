@@ -1,8 +1,8 @@
 % Path mesh functions
-path_msh_func = '\mesh';
-path_mat_func = '\matrices';
-path_solver_func = '\solver';
-path_util_func = '\util';
+path_msh_func = '.\mesh';
+path_mat_func = '.\matrices';
+path_solver_func = '.\solver';
+path_util_func = '.\util';
 
 % Add paths
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
@@ -49,7 +49,7 @@ ibov = reshape(real(ebow*exp(-1i*omega)),[msh.nx, msh.ny]);
 %% Postprocessing
 figure
 [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-h = surf(X,Y,ibov);
+h = surf(X,Y,ibov');
 set(h,'LineStyle','none')
 set(gca,'ColorScale','log')
 figure
