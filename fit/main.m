@@ -55,7 +55,7 @@ set(gca,'ColorScale','log')
 figure
 
 intensity = ibov(:,end);
-plot(1:length(intensity), np.abs(intensity))
+plot(1:length(intensity), abs(intensity))
 
 
 function fnum = fresnel_number(nL, dx, dy, f)
