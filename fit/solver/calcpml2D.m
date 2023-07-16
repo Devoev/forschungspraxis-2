@@ -2,9 +2,16 @@ function [sx, sy] = calcpml2D(NGRID, NPML)
 % calcpml2d. von A.G.
 % 
 % Inputs:
-%   NGRID   - mesh dimentions list with [x-dim, y-dim]
-%   NPML    - number of mesh layers in each direction [x-layers, y-layers]
-% 
+%   NGRID   - mesh dimentions list with [nx, ny]
+%   NPML    - number of mesh layers [L1, L2, L3, L4]
+%
+%          L2 (top)               y
+%       +++++++               o------->
+%   L3  +     +  L1           |
+% (src) +     + (screen)    x | 
+%       +++++++               |
+%          L4 (btm)           v
+%
 % Outputs:
 %   sx    - x pml tensor w. dimension like mesh Nx x Ny
 %   sy    - y pml tensor w. dimension like mesh Nx x Ny
@@ -15,57 +22,64 @@ a_max = 3;
 p = 3;
 
 % input
-Nx = NGRID(1);
-Ny = NGRID(2);
-NXHI = NPML(1); % +X
-NYLO = NPML(2); % +Y
-NXLO = NXHI; % -X
-NYHI = NYLO; % -Y
-Lx = NXHI;
-Ly = NYLO;
+% TODO - unify coordinates x:=x y:=y
+Nx = NGRID(2);
+Ny = NGRID(1);
+
+L1 = NPML(2); 
+L2 = NPML(3);
+L3 = NPML(4);
+L4 = NPML(1);
 
 % init tensors ------------------------------------------------------------
-imp0 = 376.73;
 sx = sparse(ones(Nx, Ny));
 sy = sparse(ones(Nx, Ny));
 
-% computing pml params
-sigmax =@(x) sigma_max*sin(pi*x/(2*Lx))^2;
-sigmay =@(y) sigma_max*sin(pi*y/(2*Ly))^2;
-
-ax =@(x) 1+a_max*(x/Lx)^p;
-ay =@(y) 1+a_max*(y/Ly)^p;
-
-% building param functions
-f_sx =@(x) ax(x)*(1+1j*imp0*sigmax(x));
-f_sy =@(y) ay(y)*(1+1j*imp0*sigmay(y));
-
 % calc sx tensor ----------------------------------------------------------
-% add +X direction PML
-for nx = 1:NXHI
-    val = nx/NXHI;
-    % set column from inside to outside
-    sx(Nx-NXHI+nx,:) = f_sx(val); 
+% add L2 direction PML
+if L2 > 1
+    for nx = 1:L2
+        v = nx/L2;
+        % set column from inside to outside
+        sx(L2-nx+1,:) = impedance(v, L2, sigma_max, a_max, p); 
+    end
 end
-% add -X direction PML
-for nx = 1:NXLO
-    val = nx/NXLO;
-    % set column from inside to outside
-    sx(NXLO-nx+1,:) = f_sx(val); 
+% add L4 direction PML
+if L4 > 1
+    for nx = 1:L4
+        v = nx/L4;
+        % set column from inside to outside
+        sx(Nx-L4+nx,:) = impedance(v, L4, sigma_max, a_max, p); 
+    end
+end
+% calc sy tensor ----------------------------------------------------------
+% add L1 direction PML
+if L1 > 1
+    for ny = 1:L1
+        v = ny/L1;
+        % set row from inside to outside of boundary
+        sy(:,Ny-L1+ny) = impedance(v, L1, sigma_max, a_max, p);
+    end
+end
+% add +Y direction PML
+if L3 > 1
+    for ny = 1:L3
+        v = ny/L3;
+        % set row from inside to outside of boundary
+        sy(:,L3-ny+1) = impedance(v, L3, sigma_max, a_max, p);
+    end
 end
 
-% calc sy tensor ----------------------------------------------------------
-% add +Y direction PML
-for ny = 1:NYLO
-    val = ny/NYLO;
-    % set row from inside to outside of boundary
-    sy(:,NYLO-ny+1) = f_sy(val);
-end
-% add -Y direction PML
-for ny = 1:NYHI
-    val = ny/NXHI;
-    % set row from inside to outside of boundary
-    sy(:,Ny-NYHI+ny) = f_sy(val);
+    
+% calculate matching impedance for a certain pml layer --------------------
+function val = impedance(v, Lv, sigma_max, a_max, p)
+    imp0 = 376.73;
+    % calc sigma
+    sigma = sigma_max*sin(pi*v/(2*Lv))^2;
+    % calc attenuation
+    a = 1+a_max*(v/Lv)^p;
+    
+    val = a*(1+1j*imp0*sigma);
 end
 
 end

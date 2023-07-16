@@ -12,20 +12,20 @@ f = 50e6;
 omega = 2*pi*f;
 excitation = 1000;
 % Problem size in wavelength        |   
-%                                   |      b: middle index
-%               y                   |         
+%               L2                  |      b: middle index
+%                y                  |         
 %       ###################         |      d: distance between the
 %       #                 #         |         excitations in wave-
-%       ->                #         |         length  
+%  L3   ->                #   L1    |         length  
 %  x    #      Model      #         |
-%       ->                #         |
-%       #                 #         |
+%       ->                #         |      L: side index bc
+%       #                 #         |         [L1, L2, L3, L4]
 %       ###################         |
-
+%              L4
 
 elem_per_wavelength = 20;
 
-x = 100;
+x = 80;
 y = 100;
 d = 20; % "Gitter-Abstand"
 
