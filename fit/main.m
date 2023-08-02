@@ -3,9 +3,10 @@ path_msh_func = '.\mesh';
 path_mat_func = '.\matrices';
 path_solver_func = '.\solver';
 path_util_func = '.\util';
+path_verify_func = '.\verifications';
 
 % Add paths
-addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verify_func)
 
 %% Problem Definition
 f = 50e6;
@@ -60,6 +61,21 @@ intensity = ibov(20:end-20,end-20).^2;
 plot(1:length(intensity), abs(intensity))
 
 
+
+%% verifications
+
+%analytical solution of Helmholtz eq:
+%for easy comparison: following excitation is assumed:
+%jsbow(floor(b),1) = excitation; (1 excitation in the center)
+%following "screen" is used
+%intensity = ibov(20:end-20,end-20).^2;
+%formula is described in LaTEx
+
+E_ana = helmholtz_analytic(lambda, x, y, elem_per_wavelength, omega, excitation);
+figure 
+plot(1:length(E_ana), abs(E_ana))
+
+%%
 function fnum = fresnel_number(nD ,nL, dx, dy, f)
     a = nD * dx;
     L = nL * dy;
