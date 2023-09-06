@@ -46,7 +46,7 @@ xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
 ymesh = linspace(-h/2, h/2, h/lambda1*elem_per_wavelength);
 msh = cartMesh2D(xmesh, ymesh);
 
-[~,y1] = min(abs(msh.ymesh - d/2)); % Index of 1st slit
+[~,y1] = min(abs(msh.ymesh - d/2)); % Index of 1st slit % TODO: Increase slit width by 'delta'
 [~,y2] = min(abs(msh.ymesh + d/2)); % Index of 2nd slit
 
 jsbow = sparse(msh.np, 1);
