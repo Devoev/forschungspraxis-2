@@ -54,10 +54,9 @@ d = 4e-6;       % slit distance
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
-dx = NPML(3); % PML Offset on the left
 
 %% Generate Mesh
-elem_per_wavelength = 10;
+elem_per_wavelength = 20;
 xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
 ymesh = linspace(-h/2, h/2, h/lambda1*elem_per_wavelength);
 msh = cartMesh2D(xmesh, ymesh);
@@ -66,8 +65,8 @@ msh = cartMesh2D(xmesh, ymesh);
 [~,y2] = min(abs(msh.ymesh + d/2)); % Index of 2nd slit
 
 jsbow = sparse(msh.np, 1);
-idx1 = msh.nx * (y1-1) + dx; %  TODO: Add offset for PML boundary
-idx2 = msh.nx * (y2-1) + dx;
+idx1 = msh.nx * (y1-1) + NPML(3);
+idx2 = msh.nx * (y2-1) + NPML(3);
 jsbow(idx1) = E1; % TODO: Use J instead of E
 jsbow(idx2) = E1;
 
@@ -95,23 +94,27 @@ if solve_eq
 
     ebow = solveHelmholtzTE(msh, eps, mui, jsbow, omega1, NPML);
     save('ebow.mat', 'ebow')
-    ibov = reshape(real(ebow*exp(-1i*omega1)),[msh.nx, msh.ny]);
 end
 
 %% Postprocessing
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-    hbow = surf(X,Y,ibov');
-    set(hbow,'LineStyle','none')
+    e_surf = reshape(real(ebow*exp(-1i*omega1)), [msh.nx, msh.ny]);
+    e_surf_plot = surf(X,Y,e_surf');
+    set(e_surf_plot,'LineStyle','none')
     set(gca,'ColorScale','log')
 end
 
-% TODO: proper intensity calculation
 if plot_intensity
-    intensity = ibov(20:end-20,end-20).^2;
+    e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1)); % TODO: Add PML offset
+    e_screen = e_screen(NPML(2):end-NPML(4));
+    I = c*eps/2 * abs(e_screen).^2;
     figure
-    plot(1:length(intensity), abs(intensity))
+    plot(linspace(0, h, length(I)), I)
+    title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
+    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+    ylabel('Intensity $I$','Interpreter','latex')
 end
 
 
