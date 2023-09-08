@@ -100,7 +100,7 @@ end
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-    e_surf = reshape(real(ebow*exp(-1i*omega1)), [msh.nx, msh.ny]);
+    e_surf = reshape(real(ebow), [msh.nx, msh.ny]);
     e_surf_plot = surf(X,Y,e_surf');
     set(e_surf_plot,'LineStyle','none')
     set(gca,'ColorScale','log')
