@@ -18,7 +18,7 @@ plot_mesh = 0;          % Plot the 2D mesh
 solve_eq = 1;           % Solve the 2D Helmholtz equation
 plot_field = 1;         % Plot the 2D electrical field
 plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
-plot_intensity_ana = 0; % Plot the analytically calculated intensity on the screen
+plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -110,8 +110,9 @@ if plot_intensity
     e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1)); % TODO: Add PML offset
     e_screen = e_screen(NPML(2):end-NPML(4));
     I = c*eps/2 * abs(e_screen).^2;
+    y = linspace(-h/2, h/2, length(I));
     figure
-    plot(linspace(0, h, length(I)), I)
+    plot(y, I)
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
@@ -129,7 +130,17 @@ end
 %formula is described in LaTEx
 
 if plot_intensity_ana
-    E_ana = helmholtz_analytic(lambda1, L, h, elem_per_wavelength, omega1, E1);
+    % TODO: Fix analytical helmholtz
+%    E_ana = helmholtz_analytic(lambda1, L, h, elem_per_wavelength, omega1, E1);
+%    figure
+%    plot(1:length(E_ana), abs(E_ana))
+
+    y = linspace(-h/2, h/2, msh.ny);
+    I_ana = intensity_ana(E1, lambda1, d, L, y);
+
     figure
-    plot(1:length(E_ana), abs(E_ana))
+    plot(y, I_ana)
+    title('Analytical Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
+    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+    ylabel('Intensity $I$','Interpreter','latex')
 end
