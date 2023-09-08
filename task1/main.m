@@ -9,6 +9,21 @@ path_verify_func = './task1/verifications';
 cd('../');
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verify_func)
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Options
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+calc_fresnel_num = 0;   % Calculate the fresnel number
+plot_mesh = 0;          % Plot the 2D mesh
+solve_eq = 1;           % Solve the 2D Helmholtz equation
+plot_field = 1;         % Plot the 2D electrical field
+plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
+plot_intensity_ana = 0; % Plot the analytically calculated intensity on the screen
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 %% Problem Definition
 c = 3e8;            % m/s
 
@@ -38,7 +53,8 @@ delta = 1e-6;   % slit width
 d = 4e-6;       % slit distance
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
-
+NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
+dx = NPML(3); % PML Offset on the left
 
 %% Generate Mesh
 elem_per_wavelength = 10;
@@ -50,44 +66,53 @@ msh = cartMesh2D(xmesh, ymesh);
 [~,y2] = min(abs(msh.ymesh + d/2)); % Index of 2nd slit
 
 jsbow = sparse(msh.np, 1);
-idx1 = msh.nx * (y1-1); %  TODO: Add offset for PML boundary
-idx2 = msh.nx * (y2-1);
+idx1 = msh.nx * (y1-1) + dx; %  TODO: Add offset for PML boundary
+idx2 = msh.nx * (y2-1) + dx;
 jsbow(idx1) = E1; % TODO: Use J instead of E
 jsbow(idx2) = E1;
 
+if calc_fresnel_num
+    fprintf('Fresnel number = %f', fresnel_number(delta, L, lambda1))
+end
 
-fprintf('Fresnel number = %f', fresnel_number(delta, L, lambda1))
-
-[X,Y] = meshgrid(xmesh, ymesh);
-plot(X, Y, 'blue', X', Y', 'blue')
-hold on
-plot(0, d/2, 'x', 'color', '#A2142F', 'linewidth', 6)
-plot(0, -d/2, 'x', 'color', '#A2142F', 'linewidth', 6)
-xline(0, 'red')
-xline(L, 'red')
-yline(-h/2, 'red')
-yline(h/2, 'red')
+if plot_mesh
+    [X,Y] = meshgrid(xmesh, ymesh);
+    plot(X, Y, 'blue', X', Y', 'blue')
+    hold on
+    plot(0, d/2, 'x', 'color', '#A2142F', 'linewidth', 6)
+    plot(0, -d/2, 'x', 'color', '#A2142F', 'linewidth', 6)
+    xline(0, 'red')
+    xline(L, 'red')
+    yline(-h/2, 'red')
+    yline(h/2, 'red')
+end
 
 
 %% Solution
-eps = 8.854e-12;
-mui = 1/(4*pi*1e-7);
+if solve_eq
+    eps = 8.854e-12;
+    mui = 1/(4*pi*1e-7);
 
-ebow = solveHelmholtzTE(msh, eps, mui, jsbow, omega1, 0);
-save('ebow.mat', 'ebow')
-ibov = reshape(real(ebow*exp(-1i*omega1)),[msh.nx, msh.ny]);
+    ebow = solveHelmholtzTE(msh, eps, mui, jsbow, omega1, NPML);
+    save('ebow.mat', 'ebow')
+    ibov = reshape(real(ebow*exp(-1i*omega1)),[msh.nx, msh.ny]);
+end
 
 %% Postprocessing
-figure
-[X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-hbow = surf(X,Y,ibov');
-set(hbow,'LineStyle','none')
-set(gca,'ColorScale','log')
-figure
+if plot_field
+    figure
+    [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
+    hbow = surf(X,Y,ibov');
+    set(hbow,'LineStyle','none')
+    set(gca,'ColorScale','log')
+end
 
 % TODO: proper intensity calculation
-intensity = ibov(20:end-20,end-20).^2;
-plot(1:length(intensity), abs(intensity))
+if plot_intensity
+    intensity = ibov(20:end-20,end-20).^2;
+    figure
+    plot(1:length(intensity), abs(intensity))
+end
 
 
 
@@ -100,6 +125,8 @@ plot(1:length(intensity), abs(intensity))
 %intensity = ibov(20:end-20,end-20).^2;
 %formula is described in LaTEx
 
-E_ana = helmholtz_analytic(lambda1, L, h, elem_per_wavelength, omega1, E1);
-figure 
-plot(1:length(E_ana), abs(E_ana))
+if plot_intensity_ana
+    E_ana = helmholtz_analytic(lambda1, L, h, elem_per_wavelength, omega1, E1);
+    figure
+    plot(1:length(E_ana), abs(E_ana))
+end

@@ -1,4 +1,4 @@
-function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, bc)
+function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, npml)
 % SOLVE_HELMHOLTZ_TE Solves the 2D Helmholtz equation in the TE case.
 %
 % Inputs:
@@ -7,7 +7,7 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, bc
 %   mui     - Reluctivity values.
 %   jsbow   - Integrated current excitation.
 %   omega   - Radial excitation frequency.
-%   bc      - Boundary conditions.
+%   npml    - PML boundary conditions. Array of length 4.
 %
 % Outputs:
 %   ebow    - Integrated electric field.
@@ -15,7 +15,6 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, bc
 
     % UPML setting
     NGRID = [msh.nx, msh.ny];
-    NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 
     [c, ~, ~] = createTopMatsTE(msh);
 
@@ -25,7 +24,7 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, bc
     mmui = createMmuiTE(msh, ds, dst, da, mui);
 
     % UPML tensoren - TM mode
-    [sx, sy] = calcpml2D(NGRID, NPML);
+    [sx, sy] = calcpml2D(NGRID, npml);
     sx_v = reshape(sx', [], 1);
     sy_v = reshape(sy', [], 1);
     s_mmui = sparse(diag([sy_v./sx_v; sx_v./sy_v]));
