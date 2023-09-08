@@ -26,6 +26,8 @@ plot_intensity_ana = 1; % Plot the analytically calculated intensity on the scre
 
 %% Problem Definition
 c = 3e8;            % m/s
+eps = 8.854e-12;
+mui = 1/(4*pi*1e-7);
 
 lambda1 = 430e-9;   % m
 f1 = c/lambda1;     % Hz
@@ -89,9 +91,6 @@ end
 
 %% Solution
 if solve_eq
-    eps = 8.854e-12;
-    mui = 1/(4*pi*1e-7);
-
     ebow = solveHelmholtzTE(msh, eps, mui, jsbow, omega1, NPML);
     save('ebow.mat', 'ebow')
 end
@@ -111,6 +110,7 @@ if plot_intensity
     e_screen = e_screen(NPML(2):end-NPML(4));
     I = c*eps/2 * abs(e_screen).^2;
     y = linspace(-h/2, h/2, length(I));
+
     figure
     plot(y, I)
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
