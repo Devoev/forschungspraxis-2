@@ -1,3 +1,6 @@
+clc
+clear all
+
 % Path mesh functions
 path_msh_func = './fit/mesh';
 path_mat_func = './fit/matrices';
@@ -16,8 +19,8 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_ver
 calc_fresnel_num = 0;   % Calculate the fresnel number
 plot_mesh = 0;          % Plot the 2D mesh
 solve_eq = 1;           % Solve the 2D Helmholtz equation
-plot_field = 1;         % Plot the 2D electrical field
-plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
+plot_field = 0;         % Plot the 2D electrical field
+plot_intensity = 0;     % Plot the numerically calculated intensity on the screen
 plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,7 +32,7 @@ c = 3e8;            % m/s
 eps = 8.854e-12;
 mui = 1/(4*pi*1e-7);
 
-lambda1 = 430e-9;   % m
+lambda1 = 90e-9;   % m
 f1 = c/lambda1;     % Hz
 omega1 = 2*pi*f1;   % 1/s
 E1 = 250;           % V/m
@@ -63,14 +66,20 @@ xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
 ymesh = linspace(-h/2, h/2, h/lambda1*elem_per_wavelength);
 msh = cartMesh2D(xmesh, ymesh);
 
-[~,y1] = min(abs(msh.ymesh - d/2)); % Index of 1st slit % TODO: Increase slit width by 'delta'
-[~,y2] = min(abs(msh.ymesh + d/2)); % Index of 2nd slit
+[~,yidx(1)] = min(abs(msh.ymesh - d/2)); % Index of 1st slit % TODO: Increase slit width by 'delta'
+[~,yidx(2)] = min(abs(msh.ymesh + d/2)); % Index of 2nd slit
+[~,yidx(3)] = min(abs(msh.ymesh - d/4)); % Index of 3rd excitation
+[~,yidx(4)] = min(abs(msh.ymesh + d/4)); % Index of 4th excitation
+[~,yidx(5)] = min(abs(msh.ymesh      )); % Index of 5th excitation
 
 jsbow = sparse(msh.np, 1);
-idx1 = msh.nx * (y1-1) + NPML(3);
-idx2 = msh.nx * (y2-1) + NPML(3);
-jsbow(idx1) = E1; % TODO: Use J instead of E
-jsbow(idx2) = E1;
+idx(:) = msh.nx * (yidx(:)-1) + NPML(3);
+
+jsbow(idx(1)) = E1; % TODO: Use J instead of E
+jsbow(idx(2)) = E1;
+jsbow(idx(3)) = E1;
+jsbow(idx(4)) = E1;
+jsbow(idx(5)) = E1;
 
 if calc_fresnel_num
     fprintf('Fresnel number = %f', fresnel_number(delta, L, lambda1))
@@ -92,7 +101,7 @@ end
 %% Solution
 if solve_eq
     ebow = solveHelmholtzTE(msh, eps, mui, jsbow, omega1, NPML);
-    save('ebow.mat', 'ebow')
+    %save('ebow.mat', 'ebow')
 end
 
 %% Postprocessing
@@ -130,10 +139,12 @@ end
 %formula is described in LaTEx
 
 if plot_intensity_ana
-    % TODO: Fix analytical helmholtz
-%    E_ana = helmholtz_analytic(lambda1, L, h, elem_per_wavelength, omega1, E1);
-%    figure
-%    plot(1:length(E_ana), abs(E_ana))
+    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, yidx, h);
+    figure
+    plot(ymesh, abs(E_ana))
+    title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
+    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+    ylabel('Amplitude $I$','Interpreter','latex')
 
     y = linspace(-h/2, h/2, msh.ny);
     I_ana = intensity_ana(E1, lambda1, d, L, y);
