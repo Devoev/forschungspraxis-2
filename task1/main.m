@@ -66,22 +66,19 @@ xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
 ymesh = linspace(-h/2, h/2, h/lambda1*elem_per_wavelength);
 msh = cartMesh2D(xmesh, ymesh);
 
-[~,yidx(1)] = min(abs(msh.ymesh - d/2)); % Index of 1st slit % TODO: Increase slit width by 'delta'
-[~,yidx(2)] = min(abs(msh.ymesh + d/2)); % Index of 2nd slit
-[~,yidx(3)] = min(abs(msh.ymesh - d/4)); % Index of 3rd excitation
-[~,yidx(4)] = min(abs(msh.ymesh + d/4)); % Index of 4th excitation
-[~,yidx(5)] = min(abs(msh.ymesh      )); % Index of 5th excitation
+% Calculate BC indices
+y_slit = [(-d - delta)/2, (-d + delta)/2, (d - delta)/2, (d + delta)/2]; % y values of upper and lower slit.
+for i = 1:length(y_slit)
+    % Find y-index closest to actual y_slit value
+    [~,y_idx(i)] = min(abs(msh.ymesh - y_slit(i)));
+end
+y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)]; % Find all y-indices between slits
 
+% Set rhs and bc vectors
+idx = msh.nx * (y_idx-1) + NPML(3); % Transform y-indices to canonical index
 jsbow = sparse(msh.np, 1);
 ebow_bc = NaN(msh.np, 1);
-idx = msh.nx * (yidx-1) + NPML(3);
 ebow_bc(idx) = E1;
-
-%jsbow(idx(1)) = E1; % TODO: Use J instead of E
-%jsbow(idx(2)) = E1;
-%jsbow(idx(3)) = E1;
-%jsbow(idx(4)) = E1;
-%jsbow(idx(5)) = E1;
 
 if calc_fresnel_num
     fprintf('Fresnel number = %f', fresnel_number(delta, L, lambda1))
