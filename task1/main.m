@@ -22,9 +22,9 @@ solve_eq = 1;           % Solve the 2D Helmholtz equation
 plot_field = 0;         % Plot the 2D electrical field
 plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
 plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
+plot_intensity_err = 1; % Plot the error between analytical and numerical solutions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 
 %% Problem Definition
@@ -61,7 +61,7 @@ L = 10e-6;      % screen distance
 NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 
 %% Generate Mesh
-elem_per_wavelength = 20;
+elem_per_wavelength = 10;
 xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
 ymesh = linspace(-h/2, h/2, h/lambda1*elem_per_wavelength);
 msh = cartMesh2D(xmesh, ymesh);
@@ -115,7 +115,7 @@ if plot_field
 end
 
 % Intensity calculation
-e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1));
+e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
 e_screen = e_screen(NPML(2):end-NPML(4));
 y = ymesh(NPML(2):end-NPML(4));
 I = c*eps/2 * abs(e_screen).^2 * 10; % Remove "magical" factor 10
@@ -135,7 +135,6 @@ end
 
 % Double slit formula
 I_ana = intensity_ana(E1, lambda1, d, delta, L, y);
-
 if plot_intensity_ana
     plot(y, I_ana, 'r--', 'DisplayName', 'Analytical')
 end
@@ -148,11 +147,17 @@ if 0
     %intensity = ibov(20:end-20,end-20).^2;
     %formula is described in LaTEx
 
-        % TODO: FIX E_ana
-        E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
-        figure
-        plot(ymesh, abs(E_ana))
-        title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
-        xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-        ylabel('Amplitude $I$','Interpreter','latex')
+    % TODO: FIX E_ana
+    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
+    figure
+    plot(ymesh, abs(E_ana))
+    title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
+    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+    ylabel('Amplitude $I$','Interpreter','latex')
+end
+
+% Error calculation
+I_err = abs(I - I_ana);
+if plot_intensity_err
+    plot(y, I_err, 'DisplayName', 'Absolute error')
 end
