@@ -21,7 +21,7 @@ plot_mesh = 0;          % Plot the 2D mesh
 solve_eq = 1;           % Solve the 2D Helmholtz equation
 plot_field = 0;         % Plot the 2D electrical field
 plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
-plot_intensity_ana = 0; % Plot the analytically calculated intensity on the screen
+plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -117,7 +117,7 @@ if plot_intensity
     e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1)); % TODO: Add PML offset
     e_screen = e_screen(NPML(2):end-NPML(4));
     I = c*eps/2 * abs(e_screen).^2;
-    y = linspace(-h/2, h/2, length(I));
+    y = ymesh(NPML(2):end-NPML(4));
 
     figure
     plot(y, I)
@@ -138,7 +138,7 @@ end
 %formula is described in LaTEx
 
 if plot_intensity_ana
-    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, yidx, h);
+    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
     figure
     plot(ymesh, abs(E_ana))
     title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
