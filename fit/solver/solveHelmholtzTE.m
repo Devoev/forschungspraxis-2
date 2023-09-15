@@ -6,7 +6,7 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, 
 %   eps     - Permittivity values.
 %   mui     - Reluctivity values.
 %   jsbow   - Integrated current excitation.
-%   ebow_bc - Boundary values of integrated electric field.
+%   ebow_bc - Boundary values of integrated electric field. NaN for DOF values.
 %   omega   - Radial excitation frequency.
 %   npml    - PML boundary conditions. Array of length 4.
 %
@@ -37,12 +37,14 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, 
 
     % System matrix and rhs
     A = -c'*mmui*c + omega^2*meps;
-    rhs = 1j*omega*jsbow;
+    b = 1j*omega*jsbow;
 
-    % Deflate/ Inflate system matrix
-    % TODO: Inflation with ebow_bc
+    % Deflate system matrix
     idx_dof = isnan(ebow_bc);
     idx_bc = ~idx_dof;
+    ebow_bc = ebow_bc(idx_bc);
+    b = b(idx_dof) - A(idx_dof, idx_bc) * ebow_bc;
+    A = A(idx_dof, idx_dof);
 
     % solve equation
 %    [ebow, flag, relRes, iter, resVec] = gmres(A, rhs, 20, 1e-10, 1000); % TODO: direct vs iteratve?
@@ -52,7 +54,9 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, 
 %      error('gmres(20): some error ocurred, please check flag output.')
 %    end
 %    relRes = resVec./norm(rhs);
-    ebow = A\rhs;
+    ebow = sparse(msh.np, 1);
+    ebow(idx_dof) = A\b;
+    ebow(idx_bc) = ebow_bc;
 
     % Post processing
     bbow = -c*ebow / (1i*omega);
