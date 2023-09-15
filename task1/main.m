@@ -20,8 +20,8 @@ calc_fresnel_num = 0;   % Calculate the fresnel number
 plot_mesh = 0;          % Plot the 2D mesh
 solve_eq = 1;           % Solve the 2D Helmholtz equation
 plot_field = 0;         % Plot the 2D electrical field
-plot_intensity = 0;     % Plot the numerically calculated intensity on the screen
-plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
+plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
+plot_intensity_ana = 0; % Plot the analytically calculated intensity on the screen
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -32,7 +32,7 @@ c = 3e8;            % m/s
 eps = 8.854e-12;
 mui = 1/(4*pi*1e-7);
 
-lambda1 = 90e-9;   % m
+lambda1 = 430e-9;   % m
 f1 = c/lambda1;     % Hz
 omega1 = 2*pi*f1;   % 1/s
 E1 = 250;           % V/m
@@ -73,13 +73,15 @@ msh = cartMesh2D(xmesh, ymesh);
 [~,yidx(5)] = min(abs(msh.ymesh      )); % Index of 5th excitation
 
 jsbow = sparse(msh.np, 1);
-idx(:) = msh.nx * (yidx(:)-1) + NPML(3);
+ebow_bc = NaN(msh.np, 1);
+idx = msh.nx * (yidx-1) + NPML(3);
+ebow_bc(idx) = E1;
 
-jsbow(idx(1)) = E1; % TODO: Use J instead of E
-jsbow(idx(2)) = E1;
-jsbow(idx(3)) = E1;
-jsbow(idx(4)) = E1;
-jsbow(idx(5)) = E1;
+%jsbow(idx(1)) = E1; % TODO: Use J instead of E
+%jsbow(idx(2)) = E1;
+%jsbow(idx(3)) = E1;
+%jsbow(idx(4)) = E1;
+%jsbow(idx(5)) = E1;
 
 if calc_fresnel_num
     fprintf('Fresnel number = %f', fresnel_number(delta, L, lambda1))
@@ -100,7 +102,7 @@ end
 
 %% Solution
 if solve_eq
-    ebow = solveHelmholtzTE(msh, eps, mui, jsbow, omega1, NPML);
+    ebow = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, omega1, NPML);
     %save('ebow.mat', 'ebow')
 end
 

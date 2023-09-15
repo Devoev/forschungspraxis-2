@@ -1,4 +1,4 @@
-function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, npml)
+function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, omega, npml)
 % SOLVE_HELMHOLTZ_TE Solves the 2D Helmholtz equation in the TE case.
 %
 % Inputs:
@@ -6,6 +6,7 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, np
 %   eps     - Permittivity values.
 %   mui     - Reluctivity values.
 %   jsbow   - Integrated current excitation.
+%   ebow_bc - Boundary values of integrated electric field.
 %   omega   - Radial excitation frequency.
 %   npml    - PML boundary conditions. Array of length 4.
 %
@@ -37,6 +38,11 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, omega, np
     % System matrix and rhs
     A = -c'*mmui*c + omega^2*meps;
     rhs = 1j*omega*jsbow;
+
+    % Deflate/ Inflate system matrix
+    % TODO: Inflation with ebow_bc
+    idx_dof = isnan(ebow_bc);
+    idx_bc = ~idx_dof;
 
     % solve equation
 %    [ebow, flag, relRes, iter, resVec] = gmres(A, rhs, 20, 1e-10, 1000); % TODO: direct vs iteratve?
