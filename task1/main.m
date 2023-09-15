@@ -54,8 +54,8 @@ E2 = 500;
 %       ###################         |
 %              L4
 
-delta = 1e-6;   % slit width
 d = 4e-6;       % slit distance
+delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
@@ -138,15 +138,16 @@ end
 %formula is described in LaTEx
 
 if plot_intensity_ana
-    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
-    figure
-    plot(ymesh, abs(E_ana))
-    title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
-    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-    ylabel('Amplitude $I$','Interpreter','latex')
+    % TODO: FIX E_ana
+%    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
+%    figure
+%    plot(ymesh, abs(E_ana))
+%    title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
+%    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+%    ylabel('Amplitude $I$','Interpreter','latex')
 
     y = linspace(-h/2, h/2, msh.ny);
-    I_ana = intensity_ana(E1, lambda1, d, L, y);
+    I_ana = intensity_ana(E1, lambda1, d, delta, L, y);
 
     figure
     plot(y, I_ana)
