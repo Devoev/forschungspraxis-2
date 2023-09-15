@@ -103,6 +103,7 @@ if solve_eq
     %save('ebow.mat', 'ebow')
 end
 
+
 %% Postprocessing
 if plot_field
     figure
@@ -113,45 +114,45 @@ if plot_field
     set(gca,'ColorScale','log')
 end
 
-if plot_intensity
-    e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1)); % TODO: Add PML offset
-    e_screen = e_screen(NPML(2):end-NPML(4));
-    I = c*eps/2 * abs(e_screen).^2;
-    y = ymesh(NPML(2):end-NPML(4));
+% Intensity calculation
+e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1));
+e_screen = e_screen(NPML(2):end-NPML(4));
+y = ymesh(NPML(2):end-NPML(4));
+I = c*eps/2 * abs(e_screen).^2 * 10; % Remove "magical" factor 10
 
+if plot_intensity
     figure
-    plot(y, I)
+    plot(y, I, 'DisplayName', 'Numerical')
+    hold on
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
+    legend()
 end
-
 
 
 %% verifications
 
-%analytical solution of Helmholtz eq:
-%for easy comparison: following excitation is assumed:
-%jsbow(floor(b),1) = excitation; (1 excitation in the center)
-%following "screen" is used
-%intensity = ibov(20:end-20,end-20).^2;
-%formula is described in LaTEx
+% Double slit formula
+I_ana = intensity_ana(E1, lambda1, d, delta, L, y);
 
 if plot_intensity_ana
-    % TODO: FIX E_ana
-%    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
-%    figure
-%    plot(ymesh, abs(E_ana))
-%    title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
-%    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-%    ylabel('Amplitude $I$','Interpreter','latex')
+    plot(y, I_ana, 'r--', 'DisplayName', 'Analytical')
+end
 
-    y = linspace(-h/2, h/2, msh.ny);
-    I_ana = intensity_ana(E1, lambda1, d, delta, L, y);
+if 0
+    %analytical solution of Helmholtz eq:
+    %for easy comparison: following excitation is assumed:
+    %jsbow(floor(b),1) = excitation; (1 excitation in the center)
+    %following "screen" is used
+    %intensity = ibov(20:end-20,end-20).^2;
+    %formula is described in LaTEx
 
-    figure
-    plot(y, I_ana)
-    title('Analytical Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
-    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-    ylabel('Intensity $I$','Interpreter','latex')
+        % TODO: FIX E_ana
+        E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
+        figure
+        plot(ymesh, abs(E_ana))
+        title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
+        xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+        ylabel('Amplitude $I$','Interpreter','latex')
 end
