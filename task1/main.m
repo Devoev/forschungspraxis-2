@@ -19,10 +19,10 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_ver
 calc_fresnel_num = 0;   % Calculate the fresnel number
 plot_mesh = 0;          % Plot the 2D mesh
 solve_eq = 1;           % Solve the 2D Helmholtz equation
-plot_field = 0;         % Plot the 2D electrical field
+plot_field = 1;         % Plot the 2D electrical field
 plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
 plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
-plot_intensity_err = 1; % Plot the error between analytical and numerical solutions
+plot_intensity_err = 0; % Plot the error between analytical and numerical solutions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -61,9 +61,11 @@ L = 10e-6;      % screen distance
 NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 
 %% Generate Mesh
-elem_per_wavelength = 10;
-xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
-ymesh = linspace(-h/2, h/2, h/lambda1*elem_per_wavelength);
+elem_per_wavelength = 20;
+dx = lambda1*(NPML(3) + NPML(1))/elem_per_wavelength;  % Extra space in x direction
+dy = lambda1*(NPML(4) + NPML(2))/elem_per_wavelength;  % Extra space in y direction
+xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
+ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
 msh = cartMesh2D(xmesh, ymesh);
 
 % Calculate BC indices
@@ -127,6 +129,7 @@ if plot_intensity
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
+    xlim([-h/2, h/2])
     legend()
 end
 
