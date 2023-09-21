@@ -121,6 +121,12 @@ e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
 e_screen = e_screen(NPML(2):end-NPML(4));
 y = ymesh(NPML(2):end-NPML(4));
 I = c*eps/2 * abs(e_screen).^2 * 10; % Remove "magical" factor 10
+%I = zeros(length(e_screen), 50);
+%for i = 1:50
+%    phi = 2*pi*(i-1)/49;
+%    I(:, i) = c*eps/2 * abs(real(e_screen*exp(phi*1i))).^2;
+%end
+%I = mean(I,2) * 10;
 
 if plot_intensity
     figure

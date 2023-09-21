@@ -16,15 +16,15 @@ bPlotonScreen       = 1;
 
 %% Problem definition
 
-c = 3e8;            % m/s
+c0 = 3e8;            % m/s
 eps = 8.854e-12;
 mu = 4e-7*pi;
 mui = 1/(4*pi*1e-7);
 
 lambda1 = 430e-9;   % m
-%f1 = c/lambda1;     % Hz
-%omega1 = 2*pi*f1;   % 1/s
-%E1 = 250;           % V/m
+f1 = c0/lambda1;     % Hz
+omega1 = 2*pi*f1;   % 1/s
+E1 = 250;           % V/m
 
 %lambda2 = 510e-9;
 %f2 = c/lambda2;
@@ -51,7 +51,7 @@ L = 10e-6;      % screen distance
 
 
 %% Generate Mesh
-elem_per_wavelength = 6;
+elem_per_wavelength = 10;
   
   nz = 2;
   xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
@@ -114,23 +114,38 @@ end
 %% Simulation parameter
 
  dt = 0.5*deltaTmaxCFL;
- sigma = 25*deltaTmaxCFL
- tend = 100*sigma;
+% sigma = 25*deltaTmaxCFL
+% tend = 100*sigma;
+ tend = 3.33e-14;  % t = L/c
  steps = ceil(tend/dt);
  sourcetype= 2;  % 1: Gauss Anregung, 2: Harmonisch, 3: Konstante Anregung
 
 %% Excitation with current desnity
-    %indices for excitation are just provisional
-    jsbow_space = zeros(3*np, 1);
+
+% Calculate BC indices
+y_slit = [(-d - delta)/2, (-d + delta)/2, (d - delta)/2, (d + delta)/2]; % y values of upper and lower slit.
+for i = 1:length(y_slit)
+    % Find y-index closest to actual y_slit value
+    [~,y_idx(i)] = min(abs(msh.ymesh - y_slit(i)));
+end
+y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)]; % Find all y-indices between slits
+
+% Set rhs and bc vectors
+idx = 20 + msh.nx * (y_idx-1) + 2*np; % Transform y-indices to canonical index
+
+%indices for excitation are just provisional
+jsbow_space = zeros(3*np, 1);
+jsbow_space(idx) = 1;
     %jsbow_space(2*np+ceil(0.5*nx)*Mx+ceil(0.5*ny)*My) = 1;
-    jsbow_space(2*np+2*Mx+2*My) = 1;
-    jsbow_space(2*np+nx-2*Mx+2*My) = 1;
+%    jsbow_space(2*np+2*Mx+2*My) = 1;
+%    jsbow_space(2*np+nx-2*Mx+2*My) = 1;
 
 % Gauss 
  jsbow_gauss = @(t)(jsbow_space * exp(-4*(((t-sigma)/sigma)^2)));
 
 % Harmonic
- jsbow_harm = @(t)(jsbow_space * sin(pi*(t/sigma)));
+% jsbow_harm = @(t)(jsbow_space * sin(pi*(t/sigma)));
+ jsbow_harm = @(t)(jsbow_space * sin(omega1*t));
 
 % Const
  jsbow_const = @(t)(jsbow_space * 1);
@@ -189,7 +204,7 @@ for ii = 1:steps
 		    e_surface = reshape(ebow_new((2*np+1):(2*np+1*Mz)),nx,ny);
             figure(1)
                 mesh(e_surface)
-                axis([1 nx 1 ny -100 100])
+                axis([1 nx 1 ny -400 400])
                 caxis([-100 100])
                 title('e-bow on x-y surface','Interpreter','latex')
                 xlabel('x','Interpreter','latex')
@@ -200,17 +215,21 @@ for ii = 1:steps
         if bPlotonScreen        % show e-field on the screen
                 % index is smoehow random bec e-field is set to zero due ot bc
                 % to bechanged if new bc are impelemnted
-                e_screen = ebow_new((2*np+nx*(ny-5)+1):(2*np+nx*(ny-4)))';
+%                e_screen = ebow_new((2*np+nx*(ny-5)+1):(2*np+nx*(ny-4)))';
+                e_screen = ebow_new(-20 + msh.nx * (1:msh.ny) + 2*np);
+                I = c0*eps/2 * abs(e_screen).^2;
                 figure(2)
-                    plot(xmesh,e_screen)
-                    ylim([-10 10])
-                    xlim([xmesh(1) xmesh(length(xmesh))])
+                    plot(ymesh,I)
+                    ylim([0 c0*eps/2*E1^2])
+                    xlim([ymesh(1) ymesh(end)])
                     title('e-bow at the screen at $x=L=10^6$m','Interpreter','latex')
                     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
                     ylabel('$e-bow$','Interpreter','latex')
         end
 
         drawnow
+
+        % TODO: Calculate time avareged intensity
     end
 
 end
