@@ -12,7 +12,8 @@ addpath(path_fit_func)
 %% Here are some options
 bcalcMaxTimestep    = 0;
 b2dFieldPlot        = 0;
-bPlotonScreen       = 1;
+bPlotonScreen       = 0;
+bPlotScreen_mean    = 1;
 
 %% Problem definition
 
@@ -52,6 +53,8 @@ L = 10e-6;      % screen distance
 
 %% Generate Mesh
 elem_per_wavelength = 10;
+wavelength_offset_x = 2;      %defines distance from screen and source do boundary in x dir
+elem_offset_x = wavelength_offset_x * elem_per_wavelength;  % distance in elements in x 
   
   nz = 2;
   xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
@@ -131,7 +134,7 @@ end
 y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)]; % Find all y-indices between slits
 
 % Set rhs and bc vectors
-idx = 20 + msh.nx * (y_idx-1) + 2*np; % Transform y-indices to canonical index
+idx = elem_offset_x + msh.nx * (y_idx-1) + 2*np; % Transform y-indices to canonical index
 
 %indices for excitation are just provisional
 jsbow_space = zeros(3*np, 1);
@@ -168,6 +171,7 @@ draw_only_every = 4;
 
 %% Calculation (and parts of postprocessing) for every timestep
 t=0;
+integration_step = 0;
 
 % Time integration
 for ii = 1:steps
@@ -196,6 +200,8 @@ for ii = 1:steps
     
     % do the leapfrog step
     [hbow_new,ebow_new] = leapfrog(hbow_old, ebow_old, js, Mmui, Mepsi, c, dt);
+    % calculate intensity out of e_bow
+    I = c0*eps/2 * abs(ebow_new).^2;
     
     % plots
     if mod(ii, draw_only_every)
@@ -213,24 +219,43 @@ for ii = 1:steps
         end 
        
         if bPlotonScreen        % show e-field on the screen
-                % index is smoehow random bec e-field is set to zero due ot bc
-                % to bechanged if new bc are impelemnted
-%                e_screen = ebow_new((2*np+nx*(ny-5)+1):(2*np+nx*(ny-4)))';
-                e_screen = ebow_new(-20 + msh.nx * (1:msh.ny) + 2*np);
-                I = c0*eps/2 * abs(e_screen).^2;
+                %e_screen = ebow_new((2*np+nx*(ny-5)+1):(2*np+nx*(ny-4)))';
+                % screen is elem_offset_x ahead of bc
+                %e_screen = ebow_new(-elem_offset_x + msh.nx * (1:msh.ny) + 2*np);
+                I_screen = I(-elem_offset_x + msh.nx * (1:msh.ny) + 2*np);
                 figure(2)
-                    plot(ymesh,I)
+                    plot(ymesh,I_screen)
                     ylim([0 c0*eps/2*E1^2])
                     xlim([ymesh(1) ymesh(end)])
-                    title('e-bow at the screen at $x=L=10^6$m','Interpreter','latex')
+                    title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
                     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-                    ylabel('$e-bow$','Interpreter','latex')
+                    ylabel('$I$','Interpreter','latex')
         end
 
         drawnow
-
-        % TODO: Calculate time avareged intensity
+     
+        % TODO: Calculate time avareged intensity (before reflections come in)
+        % time when wave arrives at screen, source and screen are 1 wavelengthoffset away from bc
+        % wavelengthoffset need to be bigger than 1 such that there are no
+        % reflections from the back
+        time_arrive = (L - 2*wavelength_offset_x*lambda1)/c0;
+        % time when 1st full wave passed screen
+        time_pass = time_arrive + 1/f1;
+        if (time_arrive < t) & (t < time_pass)
+            integration_step = integration_step + 1;
+            I_screen = I(-elem_offset_x + msh.nx * (1:msh.ny) + 2*np);
+            I_screen_sample(integration_step,:) = I_screen;
+        end
     end
-
 end
 
+if bPlotScreen_mean
+    I_screen_mean = mean(I_screen_sample);
+    figure(3)
+    plot(ymesh,I_screen_mean)
+    %ylim([0 c0*eps/2*E1^2])
+    xlim([ymesh(1) ymesh(end)])
+    title('I mean at the screen at $x=L=10^6$m','Interpreter','latex')
+    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+    ylabel('$I$','Interpreter','latex')
+end
