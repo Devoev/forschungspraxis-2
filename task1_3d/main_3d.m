@@ -12,7 +12,7 @@ addpath(path_fit_func)
 %% Here are some options
 bcalcMaxTimestep    = 0;
 b2dFieldPlot        = 0;
-bPlotonScreen       = 0;
+bPlotonScreen       = 1;
 bPlotScreen_mean    = 1;
 
 %% Problem definition
@@ -46,19 +46,30 @@ E1 = 250;           % V/m
 
 d = 4e-6;       % slit distance
 delta = 1e-6;   % slit width
-h = 8e-6;       % screen height
-L = 10e-6;      % screen distance
+h = 8e-6;       % domain in y dir. (parallel to source and screen)
+L = 10e-6;      % domain in x dir. (direction source to screen)
 %NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 
 
 %% Generate Mesh
-elem_per_wavelength = 10;
-wavelength_offset_x = 2;      %defines distance from screen and source do boundary in x dir
-elem_offset_x = wavelength_offset_x * elem_per_wavelength;  % distance in elements in x 
-  
+elem_per_wavelength = 15;
+
+%x_mesh = [linspace(-wavelength_offset_x * elem_per_wavelength * edge_size, 0, wavelength_offset_x * elem_per_wavelength), ...
+%    linspace(0, L, ceil(L/edge_size))];
+
+% x-dir: subtracted from distances (source, screen) (ToDo change that it is
+% added)(ToDo change distance and time integration)
+wavelength_offset_x = 2;      % defines distance from screen and source to boundary in x dir
+elem_offset_x = wavelength_offset_x * elem_per_wavelength;  % distance in elements in x
+
+% y-dir: added to domain wavelengthoffset
+wavelength_offset_y = 10;     % defines offset from screen and source to boundary in (+/-) y dir
+off_y = wavelength_offset_y * lambda1;
+elem_offset_y = wavelength_offset_y * elem_per_wavelength; % distance in elements in y
+
   nz = 2;
-  xmesh = linspace(0, L, L/lambda1*elem_per_wavelength);
-  ymesh = linspace(-h/2, h/2, h/lambda1*elem_per_wavelength);
+  xmesh = linspace(0, L, (L/lambda1)*elem_per_wavelength);
+  ymesh = linspace(-h/2 - off_y, h/2 + off_y, ((h+2*off_y)/lambda1)*elem_per_wavelength);
   zmesh = linspace(0,1e-7,nz);  % ToDo - set value for distance in z dir.
   msh = cartMesh(xmesh, ymesh, zmesh); 
 
@@ -68,7 +79,7 @@ elem_offset_x = wavelength_offset_x * elem_per_wavelength;  % distance in elemen
 
 % grid distances (equidistant)
   delta_x = L/(nx-1);
-  delta_y = h/(ny-1);
+  delta_y = (h+2*off_y)/(ny-1);
   delta_z = 1e-7/(nz-1);
 
 Mx = msh.Mx;
@@ -222,11 +233,11 @@ for ii = 1:steps
                 %e_screen = ebow_new((2*np+nx*(ny-5)+1):(2*np+nx*(ny-4)))';
                 % screen is elem_offset_x ahead of bc
                 %e_screen = ebow_new(-elem_offset_x + msh.nx * (1:msh.ny) + 2*np);
-                I_screen = I(-elem_offset_x + msh.nx * (1:msh.ny) + 2*np);
+                I_screen = I(-elem_offset_x + msh.nx * (elem_offset_y:(msh.ny-elem_offset_y)) + 2*np);
                 figure(2)
-                    plot(ymesh,I_screen)
+                    plot(ymesh(elem_offset_y:(length(ymesh)-elem_offset_y)),I_screen)
                     ylim([0 c0*eps/2*E1^2])
-                    xlim([ymesh(1) ymesh(end)])
+                    xlim([ymesh(1)+off_y ymesh(end)-off_y])
                     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
                     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
                     ylabel('$I$','Interpreter','latex')
@@ -243,7 +254,7 @@ for ii = 1:steps
         time_pass = time_arrive + 1/f1;
         if (time_arrive < t) & (t < time_pass)
             integration_step = integration_step + 1;
-            I_screen = I(-elem_offset_x + msh.nx * (1:msh.ny) + 2*np);
+            I_screen = I(-elem_offset_x + msh.nx * (elem_offset_y:(msh.ny-elem_offset_y)) + 2*np);
             I_screen_sample(integration_step,:) = I_screen;
         end
     end
@@ -252,9 +263,9 @@ end
 if bPlotScreen_mean
     I_screen_mean = mean(I_screen_sample);
     figure(3)
-    plot(ymesh,I_screen_mean)
+    plot(ymesh(elem_offset_y:(length(ymesh)-elem_offset_y)),I_screen_mean)
     %ylim([0 c0*eps/2*E1^2])
-    xlim([ymesh(1) ymesh(end)])
+    xlim([ymesh(1)+off_y ymesh(end)-off_y])
     title('I mean at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('$I$','Interpreter','latex')
