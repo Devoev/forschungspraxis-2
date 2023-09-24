@@ -19,7 +19,7 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_ver
 calc_fresnel_num = 0;   % Calculate the fresnel number
 plot_mesh = 0;          % Plot the 2D mesh
 solve_eq = 1;           % Solve the 2D Helmholtz equation
-plot_field = 1;         % Plot the 2D electrical field
+plot_field = 0;         % Plot the 2D electrical field
 plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
 plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
 plot_intensity_err = 0; % Plot the error between analytical and numerical solutions
@@ -120,7 +120,7 @@ end
 e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
 e_screen = e_screen(NPML(2):end-NPML(4));
 y = ymesh(NPML(2):end-NPML(4));
-I = c*eps/2 * abs(e_screen).^2 * 10; % Remove "magical" factor 10
+I = c*eps/2 * abs(e_screen).^2; % Remove "magical" factor 10
 %I = zeros(length(e_screen), 50);
 %for i = 1:50
 %    phi = 2*pi*(i-1)/49;
@@ -130,7 +130,7 @@ I = c*eps/2 * abs(e_screen).^2 * 10; % Remove "magical" factor 10
 
 if plot_intensity
     figure
-    plot(y, I, 'DisplayName', 'Numerical')
+    plot(y, I/max(I), 'DisplayName', 'Numerical')
     hold on
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
@@ -142,27 +142,12 @@ end
 
 %% verifications
 
-% Double slit formula
+% Double slit and helmholtz formula
 I_ana = intensity_ana(E1, lambda1, d, delta, L, y);
+I_ana_helmholtz = helmholtz_ana(E1, lambda1, d, delta, L, y, ceil(length(y_idx)/2));
 if plot_intensity_ana
-    plot(y, I_ana, 'r--', 'DisplayName', 'Analytical')
-end
-
-if 0
-    %analytical solution of Helmholtz eq:
-    %for easy comparison: following excitation is assumed:
-    %jsbow(floor(b),1) = excitation; (1 excitation in the center)
-    %following "screen" is used
-    %intensity = ibov(20:end-20,end-20).^2;
-    %formula is described in LaTEx
-
-    % TODO: FIX E_ana
-    E_ana = helmholtz_analytic(lambda1, L, ymesh, elem_per_wavelength, E1, y_idx, h);
-    figure
-    plot(ymesh, abs(E_ana))
-    title('Ana Sol. of H-Eq via superposition at $x=L=10^6$m','Interpreter','latex')
-    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-    ylabel('Amplitude $I$','Interpreter','latex')
+    plot(y, I_ana/max(I_ana), 'r--', 'DisplayName', 'Analytical (double slit)')
+    plot(y, I_ana_helmholtz/max(I_ana_helmholtz), 'b--', 'DisplayName', 'Analytical (helmholtz)')
 end
 
 % Error calculation
