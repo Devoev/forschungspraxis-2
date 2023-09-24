@@ -11,9 +11,9 @@ addpath(path_fit_func)
 
 %% Here are some options
 bcalcMaxTimestep    = 0;
-b2dFieldPlot        = 0;
-bPlotonScreen       = 1;
-bPlotScreen_mean    = 1;
+b2dFieldPlot        = 1;
+bPlotonScreen       = 0;
+bPlotScreen_mean    = 0;
 
 %% Problem definition
 
@@ -49,12 +49,12 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % domain in y dir. (parallel to source and screen)
 L = 10e-6;      % domain in x dir. (direction source to screen)
 
-% set open boundary for each side (overrides the pmc/pec bc)
+% set open boundary for each side (overrides the initial bc)
 open_bc = [true, true, true, true];  % [L1, L2, L3, L4];
 
 
 %% Generate Mesh
-elem_per_wavelength = 15;
+elem_per_wavelength = 7;
 
 %x_mesh = [linspace(-wavelength_offset_x * elem_per_wavelength * edge_size, 0, wavelength_offset_x * elem_per_wavelength), ...
 %    linspace(0, L, ceil(L/edge_size))];
@@ -93,7 +93,7 @@ np = msh.np;
 [c, s, st] = createTopMats(msh);
 [ds, dst, da, dat] = createGeoMats(msh);
 
-bcs = [ 1, 1, 1, 1, 1, 1];
+bcs = [ 0, 0, 0, 0, 1, 1];
 
 Mmui = createMmui(msh, ds, dst, da, mui, bcs);
 Mmu = nullInv(Mmui);
@@ -139,21 +139,8 @@ end
 
 %% Excitation with current desnity
 
-% Calculate BC indices
-y_slit = [(-d - delta)/2, (-d + delta)/2, (d - delta)/2, (d + delta)/2]; % y values of upper and lower slit.
-for i = 1:length(y_slit)
-    % Find y-index closest to actual y_slit value
-    [~,y_idx(i)] = min(abs(msh.ymesh - y_slit(i)));
-end
-y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)]; % Find all y-indices between slits
-
-% Set rhs and bc vectors
-idx = elem_offset_x + msh.nx * (y_idx-1) + 2*np; % Transform y-indices to canonical index
-
-%indices for excitation are just provisional
 jsbow_space = zeros(3*np, 1);
-jsbow_space(idx) = 1;
-    %jsbow_space(2*np+ceil(0.5*nx)*Mx+ceil(0.5*ny)*My) = 1;
+jsbow_space(2*np+ceil(0.5*nx)*Mx+ceil(0.3*ny)*My) = 1;
 %    jsbow_space(2*np+2*Mx+2*My) = 1;
 %    jsbow_space(2*np+nx-2*Mx+2*My) = 1;
 
