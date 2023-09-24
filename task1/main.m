@@ -61,7 +61,7 @@ L = 10e-6;      % screen distance
 NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 
 %% Generate Mesh
-elem_per_wavelength = 20;
+elem_per_wavelength = 15;
 dx = lambda1*(NPML(3) + NPML(1))/elem_per_wavelength;  % Extra space in x direction
 dy = lambda1*(NPML(4) + NPML(2))/elem_per_wavelength;  % Extra space in y direction
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
@@ -118,8 +118,8 @@ end
 
 % Intensity calculation
 e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
-e_screen = e_screen(NPML(2):end-NPML(4));
-y = ymesh(NPML(2):end-NPML(4));
+e_screen = e_screen(1+NPML(2):end-NPML(4));
+y = ymesh(1+NPML(2):end-NPML(4));
 I = c*eps/2 * abs(e_screen).^2; % Remove "magical" factor 10
 %I = zeros(length(e_screen), 50);
 %for i = 1:50
