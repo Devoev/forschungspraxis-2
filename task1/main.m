@@ -13,18 +13,19 @@ cd('../');
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verify_func)
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Options
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-test_farfield = 0;      % Calculate the fresnel number and test the farfield condition
-plot_mesh = 0;          % Plot the 2D mesh
-solve_eq = 1;           % Solve the 2D Helmholtz equation
-plot_field = 0;         % Plot the 2D electrical field
-plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
-plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
-plot_intensity_err = 0; % Plot the error between analytical and numerical solutions
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
+plot_mesh = 0;              % Plot the 2D mesh
+solve_eq = 1;               % Solve the 2D Helmholtz equation
+plot_field = 0;             % Plot the 2D electrical field
+plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
+plot_intensity_colored = 1; % Plot the calculated intensity in the actual light colors
+plot_intensity_ana = 0;     % Plot the analytically calculated intensity on the screen
+plot_intensity_err = 0;     % Plot the error between analytical and numerical solutions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %% Problem Definition
@@ -122,14 +123,20 @@ if plot_field
 end
 
 % Intensity calculation
-e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
-e_screen = e_screen(1+NPML(2):end-NPML(4));
+e1_screen = ebow1(msh.nx * (1:msh.ny) - NPML(1))';
+e2_screen = ebow2(msh.nx * (1:msh.ny) - NPML(1))';
+%e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
+e1_screen = e1_screen(1+NPML(2):end-NPML(4));
+e2_screen = e2_screen(1+NPML(2):end-NPML(4));
+%e_screen = e_screen(1+NPML(2):end-NPML(4));
 y = ymesh(1+NPML(2):end-NPML(4));
-I = c*eps/2 * abs(e_screen).^2;
+I1 = c*eps/2 * abs(e1_screen).^2;
+I2 = c*eps/2 * abs(e2_screen).^2;
+I = I1 + I2;
 
 if plot_intensity
     figure
-    plot(y, I/max(I), 'DisplayName', 'Numerical')
+    plot(y, I, 'DisplayName', 'Numerical', 'color', '#1e8080')
     hold on
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
@@ -138,17 +145,22 @@ if plot_intensity
     legend()
 end
 
+if plot_intensity_colored
+    plot(y, I1, 'DisplayName', 'Wave 1', 'color', '#3d00ff')
+    plot(y, I2, 'DisplayName', 'Wave 2', 'color', '#00ff00')
+end
+
 
 %% verifications
 
 % Double slit and helmholtz formula
 I1_ana = intensity_ana(E1, lambda1, d, delta, L, y);
 I2_ana = intensity_ana(E2, lambda2, d, delta, L, y);
-I_ana = I1_ana + I2_ana
+I_ana = I1_ana + I2_ana;
 I1_ana_helmholtz = helmholtz_ana(E1, lambda1, d, delta, L, y, ceil(length(y_idx)/2));
 I2_ana_helmholtz = helmholtz_ana(E2, lambda2, d, delta, L, y, ceil(length(y_idx)/2));
-I_ana_helmholtz = I1_ana_helmholtz + I2_ana_helmholtz
-if plot_intensity_ana
+I_ana_helmholtz = I1_ana_helmholtz + I2_ana_helmholtz;
+if plot_intensity_ana % TODO: FIX normalization
     plot(y, I_ana/max(I_ana), 'r--', 'DisplayName', 'Analytical (double slit)')
     plot(y, I_ana_helmholtz/max(I_ana_helmholtz), 'b--', 'DisplayName', 'Analytical (helmholtz)')
 end
