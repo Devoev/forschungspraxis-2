@@ -23,9 +23,9 @@ plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
 plot_field = 0;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
-plot_intensity_colored = 1; % Plot the calculated intensity in the actual light colors
-plot_intensity_ana = 0;     % Plot the analytically calculated intensity on the screen
-plot_intensity_err = 0;     % Plot the error between analytical and numerical solutions
+plot_intensity_colored = 0; % Plot the calculated intensities in the actual light colors
+plot_intensity_ana = 1;     % Plot the analytically calculated intensity on the screen
+calc_intensity_err = 1;     % Calculates the error between analytical and numerical solutions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -124,7 +124,7 @@ if plot_field
     set(gca,'ColorScale','log')
 end
 
-% Intensity calculation
+% Intensity calculation % TODO: CAN'T add intensities!!!
 e1_screen = ebow1(msh.nx * (1:msh.ny) - NPML(1))';
 e2_screen = ebow2(msh.nx * (1:msh.ny) - NPML(1))';
 %e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
@@ -168,7 +168,9 @@ if plot_intensity_ana % TODO: FIX normalization
 end
 
 % Error calculation
-I_err = abs(I - I_ana);
-if plot_intensity_err
-    plot(y, I_err, 'DisplayName', 'Absolute error')
+I_err = norm(I/max(I) - I_ana/max(I_ana))/norm(I_ana/max(I_ana));
+I_err_helmholtz = norm(I/max(I) - I_ana_helmholtz/max(I_ana_helmholtz))/norm(I_ana_helmholtz/max(I_ana_helmholtz));
+if calc_intensity_err
+    fprintf('Relative L2 error between numerical and double slit solution = %f%% \n', 100*I_err)
+    fprintf('Relative L2 error between numerical and helmholtz solution = %f%%', 100*I_err_helmholtz)
 end
