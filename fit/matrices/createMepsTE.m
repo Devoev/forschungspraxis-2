@@ -13,10 +13,10 @@ function meps = createMepsTE(msh, ds, da, dat, eps, bc)
 %   meps - Permittivity material matrix of size (np,np).
 
     if nargin < 6
-        bc = [ 0 0 0 0 0 0 ];
+        bc = [ 0 0 0 0 ];
     end
     if nargin < 5
-        warning('Zu wenig Eingabeparameter.')
+        warning('Missing input parameters!')
     end
 
     nx = msh.nx;

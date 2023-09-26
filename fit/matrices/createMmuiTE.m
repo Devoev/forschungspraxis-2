@@ -13,10 +13,10 @@ function mmui = createMmuiTE(msh, ds, dst, da, mui, bc)
 %   mmui - Reluctivity material matrix of size (2np,2np).
     
     if nargin < 6
-        bc = [ 0 0 0 0 0 0 ];
+        bc = [ 0 0 0 0 ];
     end
     if nargin < 5
-        warning('Zu wenig Eingabeparameter.')
+        warning('Missing input parameters!')
     end
     
     nx = msh.nx;    ny = msh.ny;    
