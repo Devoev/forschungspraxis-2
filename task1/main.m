@@ -136,7 +136,7 @@ I = I1 + I2;
 
 if plot_intensity
     figure
-    plot(y, I, 'DisplayName', 'Numerical', 'color', '#1e8080')
+    plot(y, I/max(I), 'DisplayName', 'Numerical', 'color', '#1e8080')
     hold on
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
@@ -146,8 +146,8 @@ if plot_intensity
 end
 
 if plot_intensity_colored
-    plot(y, I1, 'DisplayName', 'Wave 1', 'color', '#3d00ff')
-    plot(y, I2, 'DisplayName', 'Wave 2', 'color', '#00ff00')
+    plot(y, I1/max(I), 'DisplayName', 'Wave 1', 'color', '#3d00ff')
+    plot(y, I2/max(I), 'DisplayName', 'Wave 2', 'color', '#00ff00')
 end
 
 
