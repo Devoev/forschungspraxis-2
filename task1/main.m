@@ -13,18 +13,18 @@ cd('../');
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verify_func)
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Options
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-calc_fresnel_num = 0;   % Calculate the fresnel number
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+test_farfield = 0;      % Calculate the fresnel number and test the farfield condition
 plot_mesh = 0;          % Plot the 2D mesh
 solve_eq = 1;           % Solve the 2D Helmholtz equation
 plot_field = 0;         % Plot the 2D electrical field
 plot_intensity = 1;     % Plot the numerically calculated intensity on the screen
 plot_intensity_ana = 1; % Plot the analytically calculated intensity on the screen
 plot_intensity_err = 0; % Plot the error between analytical and numerical solutions
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %% Problem Definition
@@ -82,7 +82,7 @@ jsbow = sparse(msh.np, 1);
 ebow_bc = NaN(msh.np, 1);
 ebow_bc(idx) = E1;
 
-if calc_fresnel_num
+if test_farfield
     fprintf('Fresnel number = %f', fresnel_number(delta, L, lambda1))
 end
 
