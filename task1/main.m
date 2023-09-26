@@ -28,19 +28,19 @@ plot_intensity_err = 0; % Plot the error between analytical and numerical soluti
 
 
 %% Problem Definition
-c = 3e8;            % m/s
+c = 3e8;            % [m/s]
 eps = 8.854e-12;
 mui = 1/(4*pi*1e-7);
 
-lambda1 = 430e-9;   % m
-f1 = c/lambda1;     % Hz
-omega1 = 2*pi*f1;   % 1/s
-E1 = 250;           % V/m
+lambda1 = 430e-9;   % [m]
+f1 = c/lambda1;     % [Hz]
+omega1 = 2*pi*f1;   % [1/s]
+E1 = 250;           % [V/m]
 
-lambda2 = 510e-9;
-f2 = c/lambda2;
-omega2 = 2*pi*f2;
-E2 = 500;
+lambda2 = 510e-9;   % [m]
+f2 = c/lambda2;     % [Hz]
+omega2 = 2*pi*f2;   % [1/s]
+E2 = 500;           % [V/m]
 
 % Problem size in wavelength        |   
 %               L2                  |      b: middle index
@@ -79,11 +79,14 @@ y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)]; % Find all y-indices between sli
 % Set rhs and bc vectors
 idx = msh.nx * (y_idx-1) + NPML(3); % Transform y-indices to canonical index
 jsbow = sparse(msh.np, 1);
-ebow_bc = NaN(msh.np, 1);
-ebow_bc(idx) = E1;
+ebow1_bc = NaN(msh.np, 1);
+ebow2_bc = NaN(msh.np, 1);
+ebow1_bc(idx) = E1;
+ebow2_bc(idx) = E2;
 
 if test_farfield
-    fprintf('Fresnel number = %f', fresnel_number(delta, L, lambda1))
+    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
+    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
 end
 
 if plot_mesh
@@ -101,7 +104,9 @@ end
 
 %% Solution
 if solve_eq
-    ebow = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, omega1, NPML);
+    ebow1 = solveHelmholtzTE(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
+    ebow2 = solveHelmholtzTE(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
+    ebow = ebow1 + ebow2;
     %save('ebow.mat', 'ebow')
 end
 
@@ -120,13 +125,7 @@ end
 e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
 e_screen = e_screen(1+NPML(2):end-NPML(4));
 y = ymesh(1+NPML(2):end-NPML(4));
-I = c*eps/2 * abs(e_screen).^2; % Remove "magical" factor 10
-%I = zeros(length(e_screen), 50);
-%for i = 1:50
-%    phi = 2*pi*(i-1)/49;
-%    I(:, i) = c*eps/2 * abs(real(e_screen*exp(phi*1i))).^2;
-%end
-%I = mean(I,2) * 10;
+I = c*eps/2 * abs(e_screen).^2;
 
 if plot_intensity
     figure
@@ -143,8 +142,12 @@ end
 %% verifications
 
 % Double slit and helmholtz formula
-I_ana = intensity_ana(E1, lambda1, d, delta, L, y);
-I_ana_helmholtz = helmholtz_ana(E1, lambda1, d, delta, L, y, ceil(length(y_idx)/2));
+I1_ana = intensity_ana(E1, lambda1, d, delta, L, y);
+I2_ana = intensity_ana(E2, lambda2, d, delta, L, y);
+I_ana = I1_ana + I2_ana
+I1_ana_helmholtz = helmholtz_ana(E1, lambda1, d, delta, L, y, ceil(length(y_idx)/2));
+I2_ana_helmholtz = helmholtz_ana(E2, lambda2, d, delta, L, y, ceil(length(y_idx)/2));
+I_ana_helmholtz = I1_ana_helmholtz + I2_ana_helmholtz
 if plot_intensity_ana
     plot(y, I_ana/max(I_ana), 'r--', 'DisplayName', 'Analytical (double slit)')
     plot(y, I_ana_helmholtz/max(I_ana_helmholtz), 'b--', 'DisplayName', 'Analytical (helmholtz)')
