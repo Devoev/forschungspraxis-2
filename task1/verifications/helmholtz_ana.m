@@ -17,10 +17,9 @@ function I = helmholtz_ana(E0, lambda, d, delta, L, y, n)
     c = 3e8;
     eps = 8.854e-12;
     kappa = 2*pi/lambda; % Wavenumber
-    omega = 2*pi*c/lambda; % Circular frequency
 
     E_tot = zeros(1,length(y));
-    E = @(r,t) E0*exp(1i*(omega*t - kappa*r)) ./ (kappa*r);
+    E = @(r) E0*exp(-1i*kappa*r) ./ (kappa*r);
 
     % Iteration over all excitations
     y_slit_1 = linspace((-d - delta)/2, (-d + delta)/2, n);
@@ -30,9 +29,8 @@ function I = helmholtz_ana(E0, lambda, d, delta, L, y, n)
         y2 = y - y_slit_2(i);
         r1 = sqrt(L^2 + y1.^2);
         r2 = sqrt(L^2 + y2.^2);
-        t = 0;
-        E_tot = E_tot + E(r1,t) + E(r2,t);
+        E_tot = E_tot + E(r1) + E(r2);
     end
 
-    I = c*eps/2 * abs(E_tot).^2;
+    I = c*eps/2 * abs(E_tot).^2; % Add factor of 1/2 ?
 end
