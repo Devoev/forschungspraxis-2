@@ -48,8 +48,8 @@ E2 = 500;           % [V/m]
 %        # | | | | | | | | #           |      d: distance between the
 %  [PEC] # v v v v v v v v #   [PEC]   |         excitations in wave-
 %  L3    #                 #   L1      |         length  
-%  x     #-----------------#border1    |
-%   L/2 -#----thin film----#  a        |      L: side index bc
+%  x     #-----------------#border1(L/2)|
+%        #----thin film----#  a        |      L: side index bc
 % border2#-----------------#           |         [L1, L2, L3, L4]
 %        #                 #           |
 %        ###################           |
@@ -63,16 +63,16 @@ a = 100e-9; % [m]
 NPML = [1, 20, 1, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 
 %% mesh
-elem_per_wavelength = 15;
+elem_per_wavelength = 25;
 dx = lambda1*(NPML(2)+NPML(4))/elem_per_wavelength;  % Extra space in +x direction
 xmesh = linspace(0, L + 2*dx, ceil( (L + 2*dx)/lambda1*elem_per_wavelength) );
 ymesh = linspace(-h/2, h/2, ceil( h/lambda1*elem_per_wavelength ));
 msh = cartMesh2D(xmesh, ymesh);
 
 % border x indices of different permittivity == thin film borders
-border1_x_idx = ceil((L/2-a/2)/(L/msh.nx)) 
-border2_x_idx = ceil((L/2+a/2)/(L/msh.nx))
-film_thickness = (border2_x_idx-border1_x_idx)*(L/msh.nx)
+border1_x_idx = round((L/2)/(L/msh.nx)); 
+border2_x_idx = round((L/2+a)/(L/msh.nx));
+actual_thickness = (border2_x_idx-border1_x_idx)*(L/msh.nx)
 
 %% excitation
 indices = 1:msh.np;
