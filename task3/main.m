@@ -63,7 +63,7 @@ a = 100e-9; % [m]
 NPML = [1, 20, 1, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 
 %% mesh
-elem_per_wavelength = 25;
+elem_per_wavelength = 15;
 dx = lambda1*(NPML(2)+NPML(4))/elem_per_wavelength;  % Extra space in +x direction
 xmesh = linspace(0, L + 2*dx, ceil( (L + 2*dx)/lambda1*elem_per_wavelength) );
 ymesh = linspace(-h/2, h/2, ceil( h/lambda1*elem_per_wavelength ));
@@ -71,7 +71,7 @@ msh = cartMesh2D(xmesh, ymesh);
 
 % border x indices of different permittivity == thin film borders
 border1_x_idx = round((L/2)/(L/msh.nx)); 
-border2_x_idx = round((L/2+a)/(L/msh.nx));
+border2_x_idx = border1_x_idx + round(a/(L/msh.nx));
 actual_thickness = (border2_x_idx-border1_x_idx)*(L/msh.nx)
 
 %% excitation
@@ -98,6 +98,7 @@ if plot_field
     e_surf_plot = surf(X,Y,e_surf');
     xlabel('X');
     ylabel('Y');
+    zlim([-E2*6 E2*6])
     set(e_surf_plot,'LineStyle','none')
     set(gca,'ColorScale','log')
 end
