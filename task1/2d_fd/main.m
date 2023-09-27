@@ -78,11 +78,13 @@ dx = lambda1*(offset(3) + offset(1))/elem_per_wavelength;  % Extra space in x di
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 
 if use_y_symmetry
+    bc = [0 0 1 0];
     NPML(4) = 0;
     offset(4) = 0;
-    dy = lambda1*offset(2)/elem_per_wavelength;  % Extra space in y direction for PML
+    dy = lambda1*(offset(4) + offset(2))/elem_per_wavelength;  % Extra space in y direction for PML
     ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
 else
+    bc = [0 0 0 0];
     dy = lambda1*(offset(4) + offset(2))/elem_per_wavelength;  % Extra space in y direction for PML
     ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
 end
@@ -112,8 +114,8 @@ end
 
 %% Solution
 if solve_eq
-    ebow1 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
-    ebow2 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
+    ebow1 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML, bc);
+    ebow2 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML, bc);
     ebow = ebow1 + ebow2;
     %save('ebow.mat', 'ebow')
 end
