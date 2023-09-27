@@ -107,8 +107,8 @@ end
 
 %% Solution
 if solve_eq
-    ebow1 = solveHelmholtzTE(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
-    ebow2 = solveHelmholtzTE(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
+    ebow1 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
+    ebow2 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
     ebow = ebow1 + ebow2;
     %save('ebow.mat', 'ebow')
 end

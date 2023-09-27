@@ -1,5 +1,5 @@
-function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, omega, npml)
-% SOLVE_HELMHOLTZ_TE Solves the 2D Helmholtz equation in the TE case.
+function [ebow, hbow] = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow_bc, omega, npml)
+% SOLVE_HELMHOLTZ_2D_TE_FD Solves the 2D Helmholtz equation in the TE case in frequency domain.
 %
 % Inputs:
 %   msh     - Mesh struct.
@@ -47,13 +47,6 @@ function [ebow, hbow, relRes] = solveHelmholtzTE(msh, eps, mui, jsbow, ebow_bc, 
     A = A(idx_dof, idx_dof);
 
     % solve equation
-%    [ebow, flag, relRes, iter, resVec] = gmres(A, rhs, 20, 1e-10, 1000); % TODO: direct vs iteratve?
-%    if flag == 0
-%      fprintf('gmres(20): converged at iteration %2d to a solution with relative residual %d.\n',iter,relRes);
-%    else
-%      error('gmres(20): some error ocurred, please check flag output.')
-%    end
-%    relRes = resVec./norm(rhs);
     ebow = sparse(msh.np, 1);
     ebow(idx_dof) = A\b;
     ebow(idx_bc) = ebow_bc;
