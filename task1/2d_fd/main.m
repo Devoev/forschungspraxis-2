@@ -58,16 +58,17 @@ E2 = 500;           % [V/m]
 %       ###################         |
 %              L4
 
-d = 4e-6;       % slit distance
-delta = 1e-6;   % slit width
-h = 8e-6;       % screen height
-L = 10e-6;      % screen distance
-NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
+d = 4e-6;                   % slit distance
+delta = 1e-6;               % slit width
+h = 8e-6;                   % screen height
+L = 10e-6;                  % screen distance
+NPML = [20, 20, 20, 20];    % [L1, L2, L3, L4]; 0,1:=PMC
+offset = NPML;              % Total offset from boundaries
 
 %% Generate Mesh
 elem_per_wavelength = 15;
-dx = lambda1*(NPML(3) + NPML(1))/elem_per_wavelength;  % Extra space in x direction
-dy = lambda1*(NPML(4) + NPML(2))/elem_per_wavelength;  % Extra space in y direction
+dx = lambda1*(offset(3) + offset(1))/elem_per_wavelength;  % Extra space in x direction for PML
+dy = lambda1*(offset(4) + offset(2))/elem_per_wavelength;  % Extra space in y direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
 msh = cartMesh2D(xmesh, ymesh);
@@ -118,13 +119,15 @@ if plot_field
 end
 
 % Intensity calculation % TODO: CAN'T add intensities!!!
-e1_screen = ebow1(msh.nx * (1:msh.ny) - NPML(1))';
-e2_screen = ebow2(msh.nx * (1:msh.ny) - NPML(1))';
+idx = 1+offset(2):length(ymesh)-offset(4);  % Indices at which to evaluate the intensity
+y = ymesh(idx);                             % y values at those indices
+
+e1_screen = ebow1(msh.nx * (1:msh.ny) - offset(1))';
+e2_screen = ebow2(msh.nx * (1:msh.ny) - offset(1))';
 %e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
-e1_screen = e1_screen(1+NPML(2):end-NPML(4));
-e2_screen = e2_screen(1+NPML(2):end-NPML(4));
+e1_screen = e1_screen(idx);
+e2_screen = e2_screen(idx);
 %e_screen = e_screen(1+NPML(2):end-NPML(4));
-y = ymesh(1+NPML(2):end-NPML(4));
 I1 = c*eps/2 * abs(e1_screen).^2;
 I2 = c*eps/2 * abs(e2_screen).^2;
 I = I1 + I2;
