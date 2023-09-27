@@ -86,8 +86,8 @@ ebow2_bc(idx) = E2;
 % Anregung erstmal in z-Richtung (wie Task1). entspricht Aufgabe d)
 
 %% solve system
-ebow1 = solveHelmholtzTE(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
-ebow2 = solveHelmholtzTE(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
+ebow1 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
+ebow2 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
 ebow = ebow1 + ebow2;
 
 %% Postprocessing
