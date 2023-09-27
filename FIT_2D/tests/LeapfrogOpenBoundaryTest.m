@@ -1,4 +1,7 @@
 %% Edit calculation domain
+clc
+clear
+
 xmesh = linspace(0,1,111);
 ymesh = linspace(0,1,111);
 
@@ -25,6 +28,17 @@ steps = floor(tend/dt);
 
 % Edit sourcetype
 sourcetype= 2;  % 1: Gauss Anregung, 2: Harmonisch, 3: Konstante Anregung
+
+
+%% Add paths
+path_msh_func = '../FIT_2D/mesh';
+path_mat_func = '../FIT_2D/matrices';
+path_solver_func = '../FIT_2D/solver';
+path_util_func = '../FIT_2D/util';
+
+% Add paths
+cd('../');
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 
 %% Generate mesh and matrices for calculation
