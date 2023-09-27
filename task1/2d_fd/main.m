@@ -9,10 +9,11 @@ path_mat_func = '../fit/2d/matrices';
 path_solver_func = '../fit/2d/solver';
 path_util_func = '../fit/util';
 path_verify_func = '../task1/verifications';
+path_2d_fd_func = '../task1/2d_fd';
 
 % Add paths
 cd('../');
-addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verify_func)
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verify_func, path_2d_fd_func)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,21 +72,13 @@ xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
 msh = cartMesh2D(xmesh, ymesh);
 
-% Calculate BC indices
-y_slit = [(-d - delta)/2, (-d + delta)/2, (d - delta)/2, (d + delta)/2]; % y values of upper and lower slit.
-for i = 1:length(y_slit)
-    % Find y-index closest to actual y_slit value
-    [~,y_idx(i)] = min(abs(msh.ymesh - y_slit(i)));
-end
-y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)]; % Find all y-indices between slits
-
 % Set rhs and bc vectors
-idx = msh.nx * (y_idx-1) + NPML(3); % Transform y-indices to canonical index
+idx_bc = calc_slit_idx(msh, d, delta) + NPML(3); % Transform y-indices to canonical index
 jsbow = sparse(msh.np, 1);
 ebow1_bc = NaN(msh.np, 1);
 ebow2_bc = NaN(msh.np, 1);
-ebow1_bc(idx) = E1;
-ebow2_bc(idx) = E2;
+ebow1_bc(idx_bc) = E1;
+ebow2_bc(idx_bc) = E2;
 
 if test_farfield
     fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
@@ -159,8 +152,8 @@ end
 I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
 I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
 I_farfield = I1_farfield + I2_farfield;
-I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(y_idx)/2));
-I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(y_idx)/2));
+I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
+I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
 I_helmholtz = I1_helmholtz + I2_helmholtz;
 if plot_intensity_ana % TODO: FIX normalization
     plot(y, I_farfield/max(I_farfield), 'r--', 'DisplayName', 'Analytical (farfield)')
