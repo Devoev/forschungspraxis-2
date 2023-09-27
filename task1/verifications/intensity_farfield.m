@@ -1,5 +1,5 @@
-function I = intensity_ana(E0, lambda, d, delta, L, y)
-% INTENSITY_ANA Calculates the intensity at the screen using the analytical double slit formula.
+function I = intensity_farfield(E0, lambda, d, delta, L, y)
+% INTENSITY_FARFIELD Calculates the intensity at the screen using the analytical double slit formula.
 %
 % Inputs:
 %   E0      - Max field strength.

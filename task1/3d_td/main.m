@@ -3,7 +3,7 @@ clc
 clear all
 
 % Path mesh functions
-path_fit_func = './fit_3d';
+path_fit_func = '../fit_3d';
 
 % Add paths
 cd('../');

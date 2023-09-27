@@ -4,11 +4,11 @@ clc
 clear all
 
 % Path mesh functions
-path_msh_func = './fit/mesh';
-path_mat_func = './fit/matrices';
-path_solver_func = './fit/solver';
-path_util_func = './fit/util';
-path_verify_func = './task1/verifications';
+path_msh_func = '../fit/mesh';
+path_mat_func = '../fit/matrices';
+path_solver_func = '../fit/solver';
+path_util_func = '../fit/util';
+path_verify_func = '../task1/verifications';
 
 % Add paths
 cd('../');
@@ -156,21 +156,21 @@ end
 %% verifications
 
 % Double slit and helmholtz formula
-I1_ana = intensity_ana(E1, lambda1, d, delta, L, y);
-I2_ana = intensity_ana(E2, lambda2, d, delta, L, y);
-I_ana = I1_ana + I2_ana;
-I1_ana_helmholtz = helmholtz_ana(E1, lambda1, d, delta, L, y, ceil(length(y_idx)/2));
-I2_ana_helmholtz = helmholtz_ana(E2, lambda2, d, delta, L, y, ceil(length(y_idx)/2));
-I_ana_helmholtz = I1_ana_helmholtz + I2_ana_helmholtz;
+I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
+I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
+I_farfield = I1_farfield + I2_farfield;
+I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(y_idx)/2));
+I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(y_idx)/2));
+I_helmholtz = I1_helmholtz + I2_helmholtz;
 if plot_intensity_ana % TODO: FIX normalization
-    plot(y, I_ana/max(I_ana), 'r--', 'DisplayName', 'Analytical (double slit)')
-    plot(y, I_ana_helmholtz/max(I_ana_helmholtz), 'b--', 'DisplayName', 'Analytical (helmholtz)')
+    plot(y, I_farfield/max(I_farfield), 'r--', 'DisplayName', 'Analytical (farfield)')
+    plot(y, I_helmholtz/max(I_helmholtz), 'b--', 'DisplayName', 'Analytical (Helmholtz)')
 end
 
 % Error calculation
-I_err = norm(I/max(I) - I_ana/max(I_ana))/norm(I_ana/max(I_ana));
-I_err_helmholtz = norm(I/max(I) - I_ana_helmholtz/max(I_ana_helmholtz))/norm(I_ana_helmholtz/max(I_ana_helmholtz));
+I_err = norm(I/max(I) - I_farfield/max(I_farfield))/norm(I_farfield/max(I_farfield));
+I_err_helmholtz = norm(I/max(I) - I_helmholtz/max(I_helmholtz))/norm(I_helmholtz/max(I_helmholtz));
 if calc_intensity_err
-    fprintf('Relative L2 error between numerical and double slit solution = %f%% \n', 100*I_err)
-    fprintf('Relative L2 error between numerical and helmholtz solution = %f%%', 100*I_err_helmholtz)
+    fprintf('Relative L2 error between numerical and farfield solution = %f%% \n', 100*I_err)
+    fprintf('Relative L2 error between numerical and Helmholtz solution = %f%%', 100*I_err_helmholtz)
 end

@@ -1,5 +1,5 @@
 function res = fresnel_number(delta, L, lambda)
-%% FRESNEL_NUMBER Calculates the fresnel number for the given parameters.
+% FRESNEL_NUMBER Calculates the fresnel number for the given parameters.
 %
 % Inputs:
 %   delta   - Slit with.

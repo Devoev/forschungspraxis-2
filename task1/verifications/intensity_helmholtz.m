@@ -1,5 +1,5 @@
-function I = helmholtz_ana(E0, lambda, d, delta, L, y, n)
-% HELMHOLTZ_ANA Calculates the intensity at the screen using the analytical solution of the Helmholtz equation.
+function I = intensity_helmholtz(E0, lambda, d, delta, L, y, n)
+% INTENSITY_HELMHOLTZ Calculates the intensity at the screen using the analytical solution of the Helmholtz equation.
 %
 % Inputs:
 %   E0      - Max field strength.
