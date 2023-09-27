@@ -62,12 +62,10 @@ function meps = createMepsTE(msh, ds, da, dat, eps, bc)
         if bc(1)
             n=1+(1-1)*Mx+(indy-1)*My;
             deps(n+np,n+np) = 0;
-
         end
         if bc(2)
             n=1+(nx-1)*Mx+(indy-1)*My;
             deps(n+np,n+np) = 0;
-
         end
     end
     if bc(3) || bc(4)
@@ -76,12 +74,10 @@ function meps = createMepsTE(msh, ds, da, dat, eps, bc)
         if bc(3)
             n = 1+(indx-1)*Mx+(1-1)*My;
             deps(n,n) = 0;
-
         end
         if bc(4)
             n = 1+(indx-1)*Mx+(ny-1)*My;
             deps(n,n) = 0;
-
         end
     end
 

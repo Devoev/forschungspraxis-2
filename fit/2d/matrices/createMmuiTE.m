@@ -19,7 +19,8 @@ function mmui = createMmuiTE(msh, ds, dst, da, mui, bc)
         warning('Missing input parameters!')
     end
     
-    nx = msh.nx;    ny = msh.ny;    
+    nx = msh.nx;
+    ny = msh.ny;
     np = msh.np; 
    
     if numel(mui)==2

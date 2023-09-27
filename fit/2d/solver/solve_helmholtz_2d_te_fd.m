@@ -1,4 +1,4 @@
-function [ebow, hbow] = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow_bc, omega, npml)
+function [ebow, hbow] = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow_bc, omega, npml, bc)
 % SOLVE_HELMHOLTZ_2D_TE_FD Solves the 2D Helmholtz equation in the TE case in frequency domain.
 %
 % Inputs:
@@ -9,10 +9,18 @@ function [ebow, hbow] = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow_bc, 
 %   ebow_bc - Boundary values of integrated electric field. NaN for DOF values.
 %   omega   - Radial excitation frequency.
 %   npml    - PML boundary conditions. Array of length 4.
+%   bc      - Boundary conditions.
 %
 % Outputs:
 %   ebow    - Integrated electric field.
 %   hbow    - Integrated magnetic field.
+
+    if nargin < 8
+        bc = [ 0 0 0 0 ];
+    end
+    if nargin < 7
+        warning('Missing input parameters!')
+    end
 
     % UPML setting
     NGRID = [msh.nx, msh.ny];
@@ -21,8 +29,8 @@ function [ebow, hbow] = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow_bc, 
 
     [ds, dst, da, dat] = createGeoMatsTE(msh);
 
-    meps = createMepsTE(msh, ds, da, dat, eps);
-    mmui = createMmuiTE(msh, ds, dst, da, mui);
+    meps = createMepsTE(msh, ds, da, dat, eps, bc);
+    mmui = createMmuiTE(msh, ds, dst, da, mui, bc);
 
     % UPML tensoren - TM mode
     [sx, sy] = calcpml2D(NGRID, npml);
