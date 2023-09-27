@@ -1,3 +1,5 @@
+
+function [c, s, st] = createTopMats_2D(msh)
 %% Description
 %
 % Create curl and source matrices for 2D case
@@ -12,7 +14,6 @@
 
 
 %% Function definition
-function [c, s, st] = createTopMats(msh)
    
     np=msh.np;
     px=createPx(np);

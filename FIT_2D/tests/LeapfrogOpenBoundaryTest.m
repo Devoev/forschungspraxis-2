@@ -2,8 +2,27 @@
 clc
 clear
 
+% Steps of mesh
 xmesh = linspace(0,1,111);
 ymesh = linspace(0,1,111);
+
+% Create basic mesh object
+msh = cartMesh_2D(xmesh, ymesh); 
+Mx = msh.Mx;
+My = msh.My;
+nx = msh.nx;
+ny = msh.ny;
+np = msh.np;
+
+% Parameters for permittivity
+eps0 = 8.854e-12;
+boxesEps(1).box = [1, nx, 1, ny];
+boxesEps(1).value = 1;
+
+% Parameters for inverse permeability
+mu0i = 1/(pi*4e-7);
+boxesMui(1).box = [1, nx, 1, ny];
+boxesMui(1).value = 1;
 
 % Set open boundary for each side (false -> PMC)
 open_bc = [true, true, true, true];  % [L1, L2, L3, L4];
@@ -31,40 +50,40 @@ sourcetype= 2;  % 1: Gauss Anregung, 2: Harmonisch, 3: Konstante Anregung
 
 
 %% Add paths
-path_msh_func = '../FIT_2D/mesh';
-path_mat_func = '../FIT_2D/matrices';
-path_solver_func = '../FIT_2D/solver';
-path_util_func = '../FIT_2D/util';
+
+% Get parent directory
+filePath = matlab.desktop.editor.getActiveFilename;
+[ParentFolderPath] = fileparts(filePath);
+parent = fileparts(ParentFolderPath) ;
+
+% Paths to add
+path_msh_func = append(parent, '\mesh');
+path_mat_func = append(parent, '\matrices');
+path_solver_func = append(parent, '\solver');
+path_util_func = append(parent, '\util');
 
 % Add paths
-cd('../');
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 
 %% Generate mesh and matrices for calculation
 
-% Create basic mesh object
-msh = cartMesh(xmesh, ymesh); 
-Mx = msh.Mx;
-My = msh.My;
-nx = msh.nx;
-ny = msh.ny;
-np = msh.np;
-
 % Create curl, source and geometric matirces
-[c, s, st] = createTopMats(msh);
-[ds, dst, da, dat] = createGeoMats(msh);
+[c, s, st] = createTopMats_2D(msh);
+[ds, dst, da, dat] = createGeoMats_2D(msh);
 
 % Create permittivity matrix and it's inverse
-Meps = createMeps(msh, ds, dat, epsilon);
+rel_eps = boxMesher_2D(msh, boxesEps, eps0);
+Meps = createMeps_2D(msh, ds, da, dat, rel_eps, eps0);
 Mepsi = nullInv(Meps);
 
 % Create permeability matrix and it's inverse
-Mmui = createMmui(msh, dst, da, mui);
+rel_mui = boxMesher_2D(msh, boxesMui, mu0i);
+Mmui = createMmui_2D(msh, ds, dst, da, rel_mui, mu0i);
 Mmu = nullInv(Mmui);
 
 % Determine z-edges for open boundary
-[mur_edges, mur_n_edges, mur_deltas] = initMur(msh, open_bc);
+[mur_edges, mur_n_edges, mur_deltas] = initMur_2D(msh, open_bc);
 
 
 %% Create excitation vector
@@ -137,9 +156,9 @@ for ii = 1:steps
     end
     
     % Execute timestep with leapfrog
-    [hbow_new,ebow_new] = leapfrog(hbow_old, ebow_old, js, Mmui, Mepsi, c, dt);
+    [hbow_new,ebow_new] = leapfrog_2D(hbow_old, ebow_old, js, Mmui, Mepsi, c, dt);
     % Apply open boundary with mur cond
-    ebow_new = applyMur(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt);
+    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt);
     
     % Draw electric field
     if mod(ii, draw_only_every)

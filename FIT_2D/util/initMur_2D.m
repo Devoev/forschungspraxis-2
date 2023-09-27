@@ -1,3 +1,5 @@
+
+function [zedges,n_zedges, deltas] = initMur_2D(msh, open_bc)
 %% Description
 %
 % This function creates the index lists for the boundary z-edges for a 2D
@@ -14,8 +16,6 @@
 
 
 %% Function definition
-function [zedges,n_zedges, deltas] = initMur(msh, open_bc)
-
 
     % Extract mesh parameters
     np = msh.np;

@@ -1,3 +1,5 @@
+
+function [ds, dst, da, dat] = createGeoMats_2D(msh)
 %% Description
 %
 % Create geometry matrices for 2D mesh
@@ -13,7 +15,6 @@
 
 
 %% Function definition
-function [ds, dst, da, dat] = createGeoMats(msh)
 
     % Extraction of input parameters
     nx = msh.nx;

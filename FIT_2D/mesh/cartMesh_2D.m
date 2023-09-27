@@ -1,3 +1,5 @@
+
+function [ msh ] = cartMesh_2D(xmesh, ymesh)
 %% Description
 %
 % Creates a basic 2D mesh object
@@ -18,7 +20,6 @@
 
 
 %% Function definition
-function [ msh ] = cartMesh(xmesh, ymesh)
 
     % Determine nx, ny and np as well as Mx and My
     nx = length(xmesh);

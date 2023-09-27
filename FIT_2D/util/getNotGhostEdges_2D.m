@@ -1,3 +1,5 @@
+
+function idxNotGhostEdges = getNotGhostEdges_2D(msh)
 %% Description
 %
 % Function to get indices of calc relevant edges (not ghost edges)
@@ -6,11 +8,10 @@
 % msh               2D mesh object
 %
 % Output
-% idxNotGhostEdges  Indices of calc relevant edges             
+% idxNotGhostEdges  Indices of calc relevant edges    
 
 
 %% Function definition
-function idxNotGhostEdges = getNotGhostEdges(msh)
 
     np = msh.np;
     nx = msh.nx;
