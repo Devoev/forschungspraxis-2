@@ -53,23 +53,26 @@ function meps = createMepsTE(msh, ds, da, dat, eps, bc)
         warning('Nicht implementiert; falscher Übergabeparameter epsilon (Skalar oder Vektor mit Größe 2, np oder 2*np).')
     end
 
-    % Randbedingungen einarbeiten
+    % BC
     Mx = 1; My = nx;
 
+    % BC in x direction
     if bc(1) || bc(2)
-        indy = repmat(1:ny,1,1);
+        indy = 1:ny;
 
         if bc(1)
             n=1+(1-1)*Mx+(indy-1)*My;
-            deps(n+np,n+np) = 0;
+            deps(n,n) = 0;
         end
         if bc(2)
             n=1+(nx-1)*Mx+(indy-1)*My;
-            deps(n+np,n+np) = 0;
+            deps(n,n) = 0;
         end
     end
+
+    % BC in y direction
     if bc(3) || bc(4)
-        indx = repmat(1:nx,1,1);
+        indx = 1:nx;
 
         if bc(3)
             n = 1+(indx-1)*Mx+(1-1)*My;

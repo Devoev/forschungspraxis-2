@@ -20,7 +20,7 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_ver
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 1;         % Whether to use the symmetry in y direction
+use_y_symmetry = 0;         % Whether to use the symmetry in y direction
 plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
 plot_field = 1;             % Plot the 2D electrical field
