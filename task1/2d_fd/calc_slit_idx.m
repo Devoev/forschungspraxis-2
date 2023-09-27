@@ -1,10 +1,11 @@
-function idx = calc_slit_idx(msh, d, delta)
+function idx = calc_slit_idx(msh, d, delta, use_y_symmetry)
 % CALC_SLIT_IDX Calculates the indices for the the 2 slits of the double slit.
 %
 % Inputs:
-%   msh     - Mesh.
-%   d       - Slit distance.
-%   delta   - Slit width.
+%   msh             - Mesh.
+%   d               - Slit distance.
+%   delta           - Slit width.
+%   use_y_symmetry  - Whether to use the symmetry in y direction and only get indices for one slit.
 %
 % Outputs:
 %   idx     - Canonical indices of slits at the left boundary.
@@ -14,6 +15,14 @@ function idx = calc_slit_idx(msh, d, delta)
         % Find y-index closest to actual y_slit value
         [~,y_idx(i)] = min(abs(msh.ymesh - y_slit(i)));
     end
-    y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)]; % Find all y-indices between slits
-    idx = msh.nx * (y_idx-1); % Transform y indices to canonical indices
+
+    % Find all y-indices between slits
+    if use_y_symmetry
+        y_idx = y_idx(3):y_idx(4);
+    else
+        y_idx = [y_idx(1):y_idx(2), y_idx(3):y_idx(4)];
+    end
+
+    % Transform y indices to canonical indices
+    idx = msh.nx * (y_idx-1);
 end

@@ -20,9 +20,10 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_ver
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
+use_y_symmetry = 1;         % Whether to use the symmetry in y direction
 plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
-plot_field = 0;             % Plot the 2D electrical field
+plot_field = 1;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
 plot_intensity_colored = 0; % Plot the calculated intensities in the actual light colors
 plot_intensity_ana = 1;     % Plot the analytically calculated intensity on the screen
@@ -46,6 +47,11 @@ f2 = c/lambda2;     % [Hz]
 omega2 = 2*pi*f2;   % [1/s]
 E2 = 500;           % [V/m]
 
+if test_farfield
+    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
+    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
+end
+
 % Problem size in wavelength        |   
 %               L2                  |      b: middle index
 %                y                  |         
@@ -67,24 +73,29 @@ offset = NPML;              % Total offset from boundaries
 
 %% Generate Mesh
 elem_per_wavelength = 15;
+
 dx = lambda1*(offset(3) + offset(1))/elem_per_wavelength;  % Extra space in x direction for PML
-dy = lambda1*(offset(4) + offset(2))/elem_per_wavelength;  % Extra space in y direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
-ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
+
+if use_y_symmetry
+    NPML(4) = 0;
+    offset(4) = 0;
+    dy = lambda1*offset(2)/elem_per_wavelength;  % Extra space in y direction for PML
+    ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
+else
+    dy = lambda1*(offset(4) + offset(2))/elem_per_wavelength;  % Extra space in y direction for PML
+    ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
+end
+
 msh = cartMesh2D(xmesh, ymesh);
 
 % Set rhs and bc vectors
-idx_bc = calc_slit_idx(msh, d, delta) + NPML(3); % Transform y-indices to canonical index
+idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry) + NPML(3); % Transform y-indices to canonical index
 jsbow = sparse(msh.np, 1);
 ebow1_bc = NaN(msh.np, 1);
 ebow2_bc = NaN(msh.np, 1);
 ebow1_bc(idx_bc) = E1;
 ebow2_bc(idx_bc) = E2;
-
-if test_farfield
-    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
-    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
-end
 
 if plot_mesh
     [X,Y] = meshgrid(xmesh, ymesh);
@@ -109,19 +120,21 @@ end
 
 
 %% Postprocessing
+idx = 1+offset(4):length(ymesh)-offset(2);  % Indices at which to evaluate the field
+y = ymesh(idx);                             % y values at those indices
+
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
     e_surf = reshape(real(ebow), [msh.nx, msh.ny]);
     e_surf_plot = surf(X,Y,e_surf');
+    %xlim([0, L])
+    ylim([-h/2, h/2])
     set(e_surf_plot,'LineStyle','none')
     set(gca,'ColorScale','log')
 end
 
 % Intensity calculation % TODO: CAN'T add intensities!!!
-idx = 1+offset(2):length(ymesh)-offset(4);  % Indices at which to evaluate the intensity
-y = ymesh(idx);                             % y values at those indices
-
 e1_screen = ebow1(msh.nx * (1:msh.ny) - offset(1))';
 e2_screen = ebow2(msh.nx * (1:msh.ny) - offset(1))';
 %e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
