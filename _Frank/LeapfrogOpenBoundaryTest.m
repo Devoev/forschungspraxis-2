@@ -1,6 +1,6 @@
 %% Edit calculation domain
-xmesh = linspace(0,1,91);
-ymesh = linspace(0,1,91);
+xmesh = linspace(0,1,111);
+ymesh = linspace(0,1,111);
 
 % Set open boundary for each side (false -> PMC)
 open_bc = [true, true, true, true];  % [L1, L2, L3, L4];
@@ -19,8 +19,8 @@ sigma = 6e-10;
 f = 1e9;
 
 % Time parameters
-dt = 5e-12;
-tend = 5*sigma;
+dt = 1e-11;
+tend = 10*sigma;
 steps = floor(tend/dt);
 
 % Edit sourcetype
@@ -88,7 +88,7 @@ power_source = zeros(1,steps);
 % Plot parameter for "movie"
 figure(1)
 zlimit = 700;
-draw_only_every = 40;
+draw_only_every = 5;
 
 
 %% Execute simulation
