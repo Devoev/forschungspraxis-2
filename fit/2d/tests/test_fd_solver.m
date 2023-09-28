@@ -20,8 +20,8 @@ clc
 clear
 
 % Steps of mesh
-xmesh = linspace(0,1,200);
-ymesh = linspace(0,1,200);
+xmesh = linspace(0,4,400);
+ymesh = linspace(0,2,200);
 
 % Create basic mesh object
 msh = cartMesh_2D(xmesh, ymesh); 
@@ -58,13 +58,13 @@ y_L = ceil(msh.ny/2);
 n = 1 + (x_L-1)*Mx + (y_L-1)*My + 2*np;
 
 % Set indices for electric field excitation
-idx_bc = [n]; %#ok<NBRAK2> 
+idx_bc = [n, n+40]; 
 
 % Set corresponding values for electric field excitation
-ebow_bc = [250];  %#ok<NBRAK2> 
+ebow_bc = ones(max(size(idx_bc)),1) * 250; 
 
 % Frequency for excitation
-f = 2e9;
+f = 1e9;
 
 % Source current
 jsbow = sparse(3*np,1);
