@@ -1,4 +1,4 @@
-function [sx, sy] = calcpml2D(NGRID, NPML)
+function [Meps_s, Mmui_s] = calcpml_2D(msh, NPML, Meps, Mmui)
 % calcpml2d. von A.G.
 % 
 % Inputs:
@@ -13,8 +13,8 @@ function [sx, sy] = calcpml2D(NGRID, NPML)
 %          L4 (btm)           v
 %
 % Outputs:
-%   sx    - x pml tensor w. dimension like mesh Nx x Ny
-%   sy    - y pml tensor w. dimension like mesh Nx x Ny
+%   Meps_s   - permeability matrix with PML boundary material
+%   Mmui_s    - inverse permittivity matrix with PML boundary material
 
 % pml settings
 sigma_max = 1;
@@ -23,19 +23,19 @@ p = 3;
 
 % input
 % TODO - unify coordinates x:=x y:=y
-Nx = NGRID(2);
-Ny = NGRID(1);
+Nx = msh.ny;
+Ny = msh.nx;
 
-L1 = NPML(2); 
-L2 = NPML(3);
-L3 = NPML(4);
-L4 = NPML(1);
+L1 = NPML(1); 
+L2 = NPML(2);
+L3 = NPML(3);
+L4 = NPML(4);
 
 % init tensors ------------------------------------------------------------
 sx = sparse(ones(Nx, Ny));
 sy = sparse(ones(Nx, Ny));
 
-% calc sx tensor ----------------------------------------------------------
+%% calc sx tensor comp ----------------------------------------------------
 % add L2 direction PML
 if L2 > 1
     for nx = 1:L2
@@ -52,7 +52,7 @@ if L4 > 1
         sx(Nx-L4+nx,:) = impedance(v, L4, sigma_max, a_max, p); 
     end
 end
-% calc sy tensor ----------------------------------------------------------
+%% calc sy tensor comp ----------------------------------------------------
 % add L1 direction PML
 if L1 > 1
     for ny = 1:L1
@@ -70,6 +70,14 @@ if L3 > 1
     end
 end
 
+%% build and apply the 3np x 3np S tensor
+
+sx_v = reshape(sx', [], 1);
+sy_v = reshape(sy', [], 1);
+S = sparse(diag([sy_v./sx_v; sx_v./sy_v; sx_v.*sy_v]));
+
+Meps_s = S*Meps;
+Mmui_s = S*Mmui;
     
 % calculate matching impedance for a certain pml layer --------------------
 function val = impedance(v, Lv, sigma_max, a_max, p)

@@ -20,8 +20,8 @@ clc
 clear
 
 % Steps of mesh
-xmesh = linspace(0,1,111);
-ymesh = linspace(0,1,111);
+xmesh = linspace(0,1,101);
+ymesh = linspace(0,1,101);
 
 % Create basic mesh object
 msh = cartMesh_2D(xmesh, ymesh); 
@@ -92,8 +92,14 @@ n = 1 + x_L*Mx + y_L*My + 2*np;
 jsbow(n) = I;  
 omega = 2 * pi * f;
 
-% Set up stystem of equations
-A = -c'*Mmui*c + omega^2*Meps - 1i*omega*Mkaps;
+%% Set up stystem of equations
+
+% add PML condition to material mats
+NPML = [20,20,20,20];
+[Meps, Mmui] = calcpml_2D(msh, NPML, Meps, Mmui);
+
+% Mkap is not affected by PML
+A = -c'*Mmui*c + omega^2*Meps; % - 1i*omega*Mkaps;
 b = 1j*omega*jsbow;
 
 % Deflate system matrix
@@ -113,12 +119,12 @@ zlimit = 700;
 
 z_plane = 1;
 idx2plot = 2*np+1:3*np;
-ebow_mat = reshape(ebow(idx2plot),nx,ny);
+ebow_mat = reshape(ebow(idx2plot),ny,nx);
 figure(1)
 mesh(ebow_mat)
-xlabel('i')
-ylabel('j')
+xlabel('i (X)')
+ylabel('j (Y)')
 zlabel(['z-Komponente des E-Feldes für z=',num2str(z_plane)])
-axis([1 nx 1 ny -zlimit zlimit])
+axis([1 nx 1 ny]) % -zlimit zlimit
 
 drawnow
