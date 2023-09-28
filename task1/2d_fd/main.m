@@ -4,9 +4,9 @@ clc
 clear all
 
 % Path mesh functions
-path_msh_func = '../fit/2d/mesh';
-path_mat_func = '../fit/2d/matrices';
-path_solver_func = '../fit/2d/solver';
+path_msh_func = '../fit/2d_te/mesh';
+path_mat_func = '../fit/2d_te/matrices';
+path_solver_func = '../fit/2d_te/solver';
 path_util_func = '../fit/util';
 path_verify_func = '../task1/verifications';
 path_2d_fd_func = '../task1/2d_fd';
