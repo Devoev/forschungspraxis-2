@@ -9,7 +9,7 @@ path_mat_func = '../fit/2d_te/matrices';
 path_solver_func = '../fit/2d_te/solver';
 path_util_func = '../fit/util';
 path_verify_func = '../task1/verifications';
-path_2d_fd_func = '../task1/2d_fd';
+path_2d_fd_func = '../task1/2d_te_fd';
 
 % Add paths
 cd('../');
