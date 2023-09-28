@@ -1,3 +1,20 @@
+%% Add paths
+
+% Get parent directory
+filePath = matlab.desktop.editor.getActiveFilename;
+[ParentFolderPath] = fileparts(filePath);
+parent = fileparts(ParentFolderPath) ;
+
+% Paths to add
+path_msh_func = append(parent, '\mesh');
+path_mat_func = append(parent, '\matrices');
+path_solver_func = append(parent, '\solver');
+path_util_func = append(parent, '\util');
+
+% Add paths
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
+
+
 %% Edit calculation domain
 clc
 clear
@@ -47,23 +64,6 @@ steps = floor(tend/dt);
 
 % Edit sourcetype
 sourcetype= 2;  % 1: Gauss Anregung, 2: Harmonisch, 3: Konstante Anregung
-
-
-%% Add paths
-
-% Get parent directory
-filePath = matlab.desktop.editor.getActiveFilename;
-[ParentFolderPath] = fileparts(filePath);
-parent = fileparts(ParentFolderPath) ;
-
-% Paths to add
-path_msh_func = append(parent, '\mesh');
-path_mat_func = append(parent, '\matrices');
-path_solver_func = append(parent, '\solver');
-path_util_func = append(parent, '\util');
-
-% Add paths
-addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 
 %% Generate mesh and matrices for calculation
