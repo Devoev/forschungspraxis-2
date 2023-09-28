@@ -40,6 +40,11 @@ function [zedges,n_zedges, deltas] = initMur_2D(msh, open_bc)
     indy = repmat(1:ny,1,1);
     indx = repmat(1:nx,1,1);
 
+    b1_zedges = [];
+    b2_zedges = [];
+    b3_zedges = [];
+    b4_zedges = [];
+
     if b1_bool
         % calculate indices for boundary on the right (x = x_max)
         b1_zedges = 1+(nx-1)*Mx+(indy-1)*My + 2*np;
