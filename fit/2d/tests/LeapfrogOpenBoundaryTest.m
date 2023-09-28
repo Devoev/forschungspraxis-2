@@ -20,8 +20,8 @@ clc
 clear
 
 % Steps of mesh
-xmesh = linspace(0,1,111);
-ymesh = linspace(0,1,111);
+xmesh = linspace(0,1.5,150);
+ymesh = linspace(0,1,100);
 
 % Create basic mesh object
 msh = cartMesh_2D(xmesh, ymesh); 
@@ -43,10 +43,6 @@ boxesMui(1).value = 1;
 
 % Set open boundary for each side (false -> PMC)
 open_bc = [true, true, true, true];  % [L1, L2, L3, L4];
-
-% Relative permeability and permittivity
-mui = 1;
-epsilon = 1;
 
 
 %% Edit excitation
@@ -94,7 +90,7 @@ jsbow_space = zeros(3*np, 1);
 % Determine index in the middle of the calculation domain
 x_L = ceil(msh.nx/2);
 y_L = ceil(msh.ny/2);
-n = 1 + x_L*Mx + y_L*My + 2*np;
+n = 1 + (x_L-1)*Mx + (y_L-1)*My + 2*np;
 
 % Set current on the determined index
 jsbow_space(n) = 1;  
@@ -161,18 +157,25 @@ for ii = 1:steps
     ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt);
     
     % Draw electric field
+    idx2plot = 2*np+1:3*np;
+    [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
     if mod(ii, draw_only_every)
-        z_plane = 1;
-        idx2plot = 2*np+1:3*np;
-		ebow_mat = reshape(ebow_new(idx2plot),nx,ny);
-    	figure(1)
-        mesh(ebow_mat)
-        xlabel('i')
-        ylabel('j')
-        zlabel('z-component of electric field')
-		axis([1 nx 1 ny -zlimit zlimit])
-		clim([-zlimit zlimit])
+        f = figure(1);
+        e_surf = reshape(ebow_new(idx2plot), [msh.nx, msh.ny]);
+        e_surf_plot = surf(X,Y,e_surf');
+        zlim([-zlimit zlimit])
+        set(e_surf_plot,'LineStyle','none')
+        set(gca,'ColorScale','log')
         drawnow
+
+%         figure(1)
+%         idx2plot = 2*np+1:3*np;
+%         [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
+%         e_surf = reshape(ebow_new(idx2plot), [msh.nx, msh.ny]);
+%         e_surf_plot = surf(X,Y,e_surf');
+%         axis([1 nx 1 ny -zlimit zlimit])
+%         %xlim([0, L])
+%         drawnow
     end
 
     % Calculate energy in the system and power of the source
