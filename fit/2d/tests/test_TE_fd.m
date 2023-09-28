@@ -20,8 +20,8 @@ clc
 clear
 
 % Steps of mesh
-xmesh = linspace(0,1,101);
-ymesh = linspace(0,1,101);
+xmesh = linspace(0,1,200);
+ymesh = linspace(0,1,200);
 
 % Create basic mesh object
 msh = cartMesh_2D(xmesh, ymesh); 
@@ -44,16 +44,30 @@ boxesMui(1).value = 1;
 % Parameters for conductivity
 kap0 = 0;
 boxesKaps(1).box = [1, nx, 1, ny];
-boxesKaps(1).value = 0.03;
+boxesKaps(1).value = 0;
+
+% Distances for PML
+NPML = [20,20,20,20];
 
 
 %% Edit excitation
 
-% Current
-I = 1;
+% Get z-edge in the middle of the calc domain
+x_L = ceil(msh.nx/2);
+y_L = ceil(msh.ny/2);
+n = 1 + (x_L-1)*Mx + (y_L-1)*My + 2*np;
 
-% Frequency 
+% Set indices for electric field excitation
+idx_bc = [n]; %#ok<NBRAK2> 
+
+% Set corresponding values for electric field excitation
+ebow_bc = [250];  %#ok<NBRAK2> 
+
+% Frequency for excitation
 f = 2e9;
+
+% Source current
+jsbow = sparse(3*np,1);
 
 
 %% Generate mesh and matrices for calculation
@@ -64,67 +78,31 @@ f = 2e9;
 
 % Create permittivity matrix and it's inverse
 rel_eps = boxMesher_2D(msh, boxesEps, eps0);
-Meps = createMeps_2D(msh, ds, da, dat, rel_eps, eps0);
-Mepsi = nullInv(Meps);
+meps = createMeps_2D(msh, ds, da, dat, rel_eps, eps0);
+mepsi = nullInv(meps);
 
 % Create conductivity matrix and it's inverse
 kaps_vec = boxMesher_2D(msh, boxesKaps, kap0);
-Mkaps = createMeps_2D(msh, ds, da, dat, kaps_vec, 1);
-Mkapsi = nullInv(Mkaps);
+mkaps = createMeps_2D(msh, ds, da, dat, kaps_vec, 1);
+mkapsi = nullInv(mkaps);
 
 % Create permeability matrix and it's inverse
 rel_mui = boxMesher_2D(msh, boxesMui, mu0i);
-Mmui = createMmui_2D(msh, ds, dst, da, rel_mui, mu0i);
-Mmu = nullInv(Mmui);
+mmui = createMmui_2D(msh, ds, dst, da, rel_mui, mu0i);
+mmu = nullInv(mmui);
 
 
-%% Create excitation vector
-
-% Create empty jsbow_space vector
-jsbow = sparse(3*msh.np, 1);
-
-% Determine index in the middle of the calculation domain
-x_L = ceil(msh.nx/2);
-y_L = ceil(msh.ny/2);
-n = 1 + x_L*Mx + y_L*My + 2*np;
-
-% Set current on the determined index
-jsbow(n) = I;  
+%% Solve in frequency domain
 omega = 2 * pi * f;
+[ebow, hbow] = frequency_domain_2D(msh, c, meps, mmui, mkaps, jsbow, idx_bc, ebow_bc, omega, NPML);
 
-%% Set up stystem of equations
 
-% add PML condition to material mats
-NPML = [20,20,20,20];
-[Meps, Mmui] = calcpml_2D(msh, NPML, Meps, Mmui);
-
-% Mkap is not affected by PML
-A = -c'*Mmui*c + omega^2*Meps; % - 1i*omega*Mkaps;
-b = 1j*omega*jsbow;
-
-% Deflate system matrix
-idx_dof = getNotGhostEdges_2D(msh);
-idx_dof = nonzeros(idx_dof);
-b = b(idx_dof);
-A = A(idx_dof, idx_dof);
-
-% Solve system
-ebow = sparse(3*msh.np, 1);
-ebow(idx_dof) = A\b;
-
-% Plot solution
-ebow = real(ebow);
-
-zlimit = 700;
-
-z_plane = 1;
-idx2plot = 2*np+1:3*np;
-ebow_mat = reshape(ebow(idx2plot),ny,nx);
+%% Plot solution for electric field
 figure(1)
-mesh(ebow_mat)
-xlabel('i (X)')
-ylabel('j (Y)')
-zlabel(['z-Komponente des E-Feldes für z=',num2str(z_plane)])
-axis([1 nx 1 ny]) % -zlimit zlimit
-
+idx2plot = 2*np+1:3*np;
+[X,Y] = meshgrid(msh.xmesh, msh.ymesh);
+e_surf = reshape(real(ebow(idx2plot)), [msh.nx, msh.ny]);
+e_surf_plot = surf(X,Y,e_surf');
+set(e_surf_plot,'LineStyle','none')
+set(gca,'ColorScale','log')
 drawnow

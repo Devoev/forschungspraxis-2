@@ -20,7 +20,7 @@ clc
 clear
 
 % Steps of mesh
-xmesh = linspace(0,1.5,150);
+xmesh = linspace(0,1,100);
 ymesh = linspace(0,1,100);
 
 % Create basic mesh object
