@@ -98,7 +98,7 @@ omega = 2 * pi * f;
 
 
 %% Plot solution for electric field
-figure
+figure(1)
 idx2plot = 2*np+1:3*np;
 [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
 e_surf = reshape(real(ebow(idx2plot)), [msh.nx, msh.ny]);
