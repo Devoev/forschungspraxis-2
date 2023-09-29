@@ -27,6 +27,6 @@ function I = intensity_farfield(E0, lambda, d, delta, L, y)
 %    I = I0 * cos(pi*d*sin(theta)/lambda).^2;
 
     % w/ diffraction
-    x = pi*delta*sin(theta)/lambda;
-    I = I0 * cos(pi*d*sin(theta)/lambda).^2 .* (sin(x)./x).^2;
+    x = delta*sin(theta)/lambda;
+    I = I0 * cos(pi*d*sin(theta)/lambda).^2 .* sinc(x).^2;
 end

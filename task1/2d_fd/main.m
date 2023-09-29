@@ -21,7 +21,7 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 0;         % Whether to use the symmetry in y direction
+use_y_symmetry = 1;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
@@ -74,7 +74,7 @@ NPML = [20, 20, 20, 20];    % [L1, L2, L3, L4]; 0,1:=PMC
 offset = NPML;              % Total offset from boundaries
 
 %% Generate Mesh
-elem_per_wavelength = 13;
+elem_per_wavelength = 15;
 
 dx = lambda1*(offset(3) + offset(1))/elem_per_wavelength;  % Extra space in x direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
