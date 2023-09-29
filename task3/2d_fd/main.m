@@ -4,10 +4,10 @@ clc
 clear all
 
 % Path mesh functions
-path_msh_func = '../fit/2d_te/mesh';
-path_mat_func = '../fit/2d_te/matrices';
-path_solver_func = '../fit/2d_te/solver';
-path_util_func = '../fit/util';
+path_msh_func = '../fit/2d/mesh';
+path_mat_func = '../fit/2d/matrices';
+path_solver_func = '../fit/2d/solver';
+path_util_func = '../fit/2d/util';
 %path_verify_func = './task1/verifications';
 
 % Add paths
@@ -56,16 +56,16 @@ h = 4e-6;   % [m]
 L = 10e-6;  % [m]
 a = 100e-9; % [m]
 
-NPML = [1, 20, 1, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
-pml_spacing = 20; % spacing cells between pml layer and "real" model layers
+NPML = [20, 0, 20, 0];  % [L1, L2, L3, L4]; 0,1:=PMC
+pml_space = 20; % spacing cells between pml layer and "real" model layers
 
 
 %% mesh
-elem_per_wavelength = 20;
-dx = lambda1*(NPML(2)+NPML(4)+ 2*pml_spacing)/elem_per_wavelength;  % Extra space in +x direction
+elem_per_wavelength = 10;
+dx = lambda1*(4*pml_space)/elem_per_wavelength;  % Extra space in +x direction
 xmesh = linspace(0, L + dx, ceil((L + dx)/lambda1*elem_per_wavelength));
 ymesh = linspace(-h/2, h/2, ceil( h/lambda1*elem_per_wavelength ));
-msh = cartMesh2D(xmesh, ymesh);
+msh = cartMesh_2D(xmesh, ymesh);
 
 % border x indices of different permittivity == thin film borders
 border1_x_idx = round(msh.nx*0.5); 
@@ -92,26 +92,36 @@ else
 end
 
 %% excitation
-indices = round(0.02*msh.ny)*msh.nx:msh.np-round(0.02*msh.ny)*msh.nx;
-idx = indices(~(mod(indices,msh.nx)-NPML(2)-pml_spacing));  % idx of all L2 boundary elements
+indices = 1:msh.np;
+idx = msh.np+indices(~(mod(indices,msh.nx)-2*pml_space));  % idx of all L2 boundary elements
 % idx = round(msh.np*0.5)+round(msh.nx*0.5);
-jsbow = sparse(msh.np, 1);
-ebow1_bc = NaN(msh.np, 1);
-ebow2_bc = NaN(msh.np, 1);
+jsbow = sparse(3*msh.np, 1);
+ebow1_bc = NaN(3*msh.np, 1);
+ebow2_bc = NaN(3*msh.np, 1);
 ebow1_bc(idx) = E1;
 ebow2_bc(idx) = E2;
 % Anregung erstmal in z-Richtung (wie Task1). entspricht Aufgabe d)
 
+%% Create matrices
+[C, ~, ~] = createTopMats_2D(msh);
+[ds, dst, da, dat] = createGeoMats_2D(msh);
+
+meps = createMeps_2D(msh, ds, da, dat, ones(msh.np, 1), eps);
+mmui = createMmui_2D(msh, ds, dst, da, ones(msh.np, 1), mui);
+
 %% solve system
-ebow1 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
-ebow2 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
+% Solve
+
+ebow1 = frequency_domain_2D(msh, C, meps, mmui, 0, jsbow, idx, ebow1_bc(idx), omega1, NPML);
+ebow2 = frequency_domain_2D(msh, C, meps, mmui, 0, jsbow, idx, ebow2_bc(idx), omega2, NPML);
 ebow = ebow1 + ebow2;
+
 
 %% Postprocessing
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-    e_surf = reshape(real(ebow), [msh.nx, msh.ny]);
+    e_surf = reshape(real(ebow(msh.np+1:2*msh.np)), [msh.nx, msh.ny]);
     e_surf_plot = surf(X,Y,e_surf');
     xlabel(' X ');
     ylabel(' Y ');
@@ -121,8 +131,8 @@ if plot_field
 end
 
 % Intensity calculations % TODO: CAN'T add intensities!!!
-xL_idx = all_elem(~(mod(all_elem, msh.nx)-msh.nx+NPML(4)+pml_spacing));
-x0_idx = all_elem(~(mod(all_elem, msh.nx)-NPML(2)-pml_spacing));
+xL_idx = all_elem(~(mod(all_elem, msh.nx)-msh.nx+2*pml_space));
+x0_idx = all_elem(~(mod(all_elem, msh.nx)-2*pml_space));
 %e2_screen = ebow2(msh.nx * (1:msh.ny) - offset(1))';
 %e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
 e_x0 = ebow(x0_idx);
