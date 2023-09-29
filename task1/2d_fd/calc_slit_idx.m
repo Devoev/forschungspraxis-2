@@ -1,4 +1,4 @@
-function idx = calc_slit_idx(msh, d, delta, use_y_symmetry)
+function idx = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation)
 % CALC_SLIT_IDX Calculates the indices for the the 2 slits of the double slit.
 %
 % Inputs:
@@ -6,9 +6,10 @@ function idx = calc_slit_idx(msh, d, delta, use_y_symmetry)
 %   d               - Slit distance.
 %   delta           - Slit width.
 %   use_y_symmetry  - Whether to use the symmetry in y direction and only get indices for one slit.
+%   polarisation    - Direction of polarisation. Use 'x', 'y' or 'z'.
 %
 % Outputs:
-%   idx     - Canonical indices of slits at the left boundary (edges in z direction).
+%   idx             - Canonical indices of slits at the left boundary (edges in polarisation direction).
 
     y_slit = [(-d - delta)/2, (-d + delta)/2, (d - delta)/2, (d + delta)/2]; % y values of upper and lower slit.
     for i = 1:length(y_slit)
@@ -24,5 +25,10 @@ function idx = calc_slit_idx(msh, d, delta, use_y_symmetry)
     end
 
     % Transform y indices to canonical indices
-    idx = msh.nx * (y_idx-1) + 2*msh.np;
+    if polarisation == 'x'
+        idx = msh.nx * (y_idx-1);
+    elseif polarisation == 'y'
+        idx = msh.nx * (y_idx-1) + msh.np;
+    elseif polarisation == 'z'
+        idx = msh.nx * (y_idx-1) + 2*msh.np;
 end

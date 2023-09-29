@@ -21,7 +21,8 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 1;         % Whether to use the symmetry in y direction
+use_y_symmetry = 0;         % Whether to use the symmetry in y direction
+polarisation = 'z';         % Direction of polarisation of the electric field
 plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
 plot_field = 1;             % Plot the 2D electrical field
@@ -73,7 +74,7 @@ NPML = [20, 20, 20, 20];    % [L1, L2, L3, L4]; 0,1:=PMC
 offset = NPML;              % Total offset from boundaries
 
 %% Generate Mesh
-elem_per_wavelength = 20;
+elem_per_wavelength = 13;
 
 dx = lambda1*(offset(3) + offset(1))/elem_per_wavelength;  % Extra space in x direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
@@ -91,7 +92,7 @@ end
 msh = cartMesh_2D(xmesh, ymesh);
 
 % Set rhs and bc vectors
-idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry) + NPML(3); % Transform y-indices to canonical index
+idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + NPML(3); % Transform y-indices to canonical index
 jsbow = sparse(3*msh.np, 1);
 ebow1_bc = NaN(3*msh.np, 1);
 ebow2_bc = NaN(3*msh.np, 1);
@@ -129,24 +130,44 @@ end
 
 
 %% Postprocessing
-idx = 1+offset(4):length(ymesh)-offset(2);  % Indices at which to evaluate the field
+idx_edge_x = 1:msh.np;
+idx_edge_y = 1+msh.np:2*msh.np;
+idx_edge_z = 1+2*msh.np:3*msh.np;
+ebow1_x = ebow1(idx_edge_x);
+ebow1_y = ebow1(idx_edge_y);
+ebow1_z = ebow1(idx_edge_z);
+ebow1_abs = sqrt(abs(ebow1_x).^2 + abs(ebow1_y).^2 + abs(ebow1_z).^2);
+ebow2_x = ebow2(idx_edge_x);
+ebow2_y = ebow2(idx_edge_y);
+ebow2_z = ebow2(idx_edge_z);
+ebow2_abs = sqrt(abs(ebow2_x).^2 + abs(ebow2_y).^2 + abs(ebow2_z).^2);
+ebow_x = ebow(idx_edge_x);
+ebow_y = ebow(idx_edge_y);
+ebow_z = ebow(idx_edge_z);
+ebow_abs = sqrt(abs(ebow_x).^2 + abs(ebow_y).^2 + abs(ebow_z).^2);
+
+idx = 1+offset(2):length(ymesh)-offset(4);  % Indices at which to evaluate the field
 y = ymesh(idx);                             % y values at those indices
 
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-    e_surf = reshape(real(ebow(2*msh.np+1:3*msh.np)), [msh.nx, msh.ny]);
+    e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
     e_surf_plot = surf(X,Y,e_surf');
     %xlim([0, L])
     ylim([-h/2, h/2])
     set(e_surf_plot,'LineStyle','none')
     set(gca,'ColorScale','log')
+    title('Absolute value of magnetic field','Interpreter','latex')
+    xlabel('$x$ (m)','Interpreter','latex')
+    ylabel('$y$ (m)','Interpreter','latex')
+    zlabel('Absolute value','Interpreter','latex')
 end
 
 % Intensity calculation % TODO: CAN'T add intensities!!!
-idx_screen = msh.nx * (1:msh.ny) - offset(1) + 2*msh.np;
-e1_screen = ebow1(idx_screen)';
-e2_screen = ebow2(idx_screen)';
+idx_screen = msh.nx * (1:msh.ny) - offset(1);
+e1_screen = ebow1_abs(idx_screen)';
+e2_screen = ebow2_abs(idx_screen)';
 %e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
 e1_screen = e1_screen(idx);
 e2_screen = e2_screen(idx);
