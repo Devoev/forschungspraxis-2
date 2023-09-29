@@ -158,7 +158,7 @@ if plot_field
     ylim([-h/2, h/2])
     set(e_surf_plot,'LineStyle','none')
     set(gca,'ColorScale','log')
-    title('Absolute value of magnetic field','Interpreter','latex')
+    title('Absolute value of electric field','Interpreter','latex')
     xlabel('$x$ (m)','Interpreter','latex')
     ylabel('$y$ (m)','Interpreter','latex')
     zlabel('Absolute value','Interpreter','latex')
