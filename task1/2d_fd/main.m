@@ -155,7 +155,7 @@ if plot_field
 end
 
 % Intensity calculation
-[I1,y] = calc_intensity(msh, ebow1', offset);   % TODO: Fix offset
+[I1,y] = calc_intensity(msh, ebow1', offset);
 I2 = calc_intensity(msh, ebow2', offset);
 I = I1 + I2;  % TODO: CAN'T add intensities!!!
 
