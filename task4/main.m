@@ -47,16 +47,16 @@ omega2 = 2*pi*f2;   % [1/s]
 E2 = 500;           % [V/m]
 
 % Problem size in wavelength        |   
-%               L2                  |      b: middle index
-%                y                  |         
+%               L3                  |      b: middle index
+%              y=-h/2               |         
 %       ###################         |      d: distance between the
 %       #                 #         |         excitations in wave-
-%  L3   #                 #   L1    |         length  
-%  x    ->     Model      #         |
+%  L4   #                 #   L2    |         length  
+%  x=0  ->     Model      #         |
 %       #                 #         |      L: side index bc
 %       #                 #         |         [L1, L2, L3, L4]
 %       ###################         |
-%              L4
+%              L1
 
 %% geometry
 h = 40e-6;     % [m]

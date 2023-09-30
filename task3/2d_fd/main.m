@@ -38,33 +38,36 @@ f2 = c/lambda2;     % [Hz]
 omega2 = 2*pi*f2;   % [1/s]
 E2 = 500;           % [V/m]
 
-%         thin film geometry           |   
-%        -h/2    L2[PML]  h/2          |      b: middle index
-%         |------ y ------|            |         
-%        # | | | | | | | | #           |      d: distance between the
-%  [PEC] # v v v v v v v v #   [PEC]   |         excitations in wave-
-%  L3    #                 #   L1      |         length  
-%  x     #-----------------#border1(L/2)|
-%        #----thin film----#  a        |      L: side index bc
-% border2#-----------------#           |         [L1, L2, L3, L4]
-%        #                 #           |
-%        ###################           |
-%               L4 [PML]
+%         thin film geometry                |   
+%              L3[PEC]                      |      b: middle index
+%                                           |         
+%        #####################----y=-h/2    |      d: distance between the
+%  [PML] ->      |   |       #   [PML]      |         excitations in wave-
+%  L4    ->      |   |       #   L2         |         length  
+%  x=0   ->      |   |       #   x=L        |
+%        ->      |   |       #              |      L: side index bc
+%        ->      |   |       #              |         [L1, L2, L3, L4]
+%        ->      |   |       #              |
+%        #####################---- y=h/2    |
+%               L/2  L/2s+a    
+%              L1 [PEC]
 
 %% geometry
 h = 4e-6;   % [m]
 L = 10e-6;  % [m]
 a = 100e-9; % [m]
 
-NPML = [20, 0, 20, 0];  % [L1, L2, L3, L4]; 0,1:=PMC
+NPML = [0, 20, 0, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
 pml_space = 20; % spacing cells between pml layer and "real" model layers
+bc.bc = ["PMC", "OPEN", "PMC", "OPEN"];   % Total offset from boundaries
+bc.NPML = NPML;
 
 
 %% mesh
 elem_per_wavelength = 10;
-dx = lambda1*(4*pml_space)/elem_per_wavelength;  % Extra space in +x direction
+dx = lambda1*(NPML(2) + NPML(4))/elem_per_wavelength;  % Extra space in +x direction
 xmesh = linspace(0, L + dx, ceil((L + dx)/lambda1*elem_per_wavelength));
-ymesh = linspace(-h/2, h/2, ceil( h/lambda1*elem_per_wavelength ));
+ymesh = linspace(-h/2, h/2, ceil( h/lambda1*elem_per_wavelength )); % No Extra space in y dir. (PEC)
 msh = cartMesh_2D(xmesh, ymesh);
 
 % border x indices of different permittivity == thin film borders
@@ -93,13 +96,13 @@ end
 
 %% excitation
 indices = 1:msh.np;
-idx = msh.np+indices(~(mod(indices,msh.nx)-2*pml_space));  % idx of all L2 boundary elements
+idx_bc = msh.np+indices(~(mod(indices,msh.nx)-2*pml_space));  % idx of all L2 boundary elements
 % idx = round(msh.np*0.5)+round(msh.nx*0.5);
 jsbow = sparse(3*msh.np, 1);
 ebow1_bc = NaN(3*msh.np, 1);
 ebow2_bc = NaN(3*msh.np, 1);
-ebow1_bc(idx) = E1;
-ebow2_bc(idx) = E2;
+ebow1_bc(idx_bc) = E1;
+ebow2_bc(idx_bc) = E2;
 % Anregung erstmal in z-Richtung (wie Task1). entspricht Aufgabe d)
 
 %% Create matrices
@@ -112,8 +115,10 @@ mmui = createMmui_2D(msh, ds, dst, da, ones(msh.np, 1), mui);
 %% solve system
 % Solve
 
-ebow1 = frequency_domain_2D(msh, C, meps, mmui, 0, jsbow, idx, ebow1_bc(idx), omega1, NPML);
-ebow2 = frequency_domain_2D(msh, C, meps, mmui, 0, jsbow, idx, ebow2_bc(idx), omega2, NPML);
+[bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow1_bc, jsbow);
+ebow1 = solve_helmholtz_2d_fd(msh, W, C, meps, mmui, jsbow, e_exi, f1, bc);
+[bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow2_bc, jsbow);
+ebow2 = solve_helmholtz_2d_fd(msh, W, C, meps, mmui, jsbow, e_exi, f2, bc);
 ebow = ebow1 + ebow2;
 
 
