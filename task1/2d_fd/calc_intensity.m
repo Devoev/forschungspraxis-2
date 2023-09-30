@@ -15,11 +15,11 @@ function [I,y] = calc_intensity(msh, ebow, offset)
     eps = 8.854e-12;
 
     % Y coordinates
-    idx_yoffset = 1+offset(2):length(msh.ymesh)-offset(4);  % y indices at the screen with offset
+    idx_yoffset = 1+offset(1):length(msh.ymesh)-offset(3);  % y indices at the screen with offset
     y = msh.ymesh(idx_yoffset);
 
     % Intensity calculation
-    idx_screen = msh.nx * (1:msh.ny) - offset(1);           % Canonical indices at the screen
+    idx_screen = msh.nx * (1:msh.ny) - offset(2);           % Canonical indices at the screen
     ebow_abs = calc_abs_field(msh, ebow);                   % Calculate abs value
     ebow_abs = ebow_abs(idx_screen);                        % Evaluate field at screen
     ebow_abs = ebow_abs(idx_yoffset);                       % Offset from y boundary

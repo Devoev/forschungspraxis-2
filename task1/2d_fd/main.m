@@ -55,44 +55,47 @@ if test_farfield
 end
 
 % Problem size in wavelength        |   
-%               L2                  |      b: middle index
+%               L3                  |      b: middle index
 %                y                  |         
 %       ###################         |      d: distance between the
 %       #                 #         |         excitations in wave-
-%  L3   ->                #   L1    |         length  
+%  L4   ->                #   L2    |         length
 %  x    #      Model      #         |
 %       ->                #         |      L: side index bc
 %       #                 #         |         [L1, L2, L3, L4]
 %       ###################         |
-%              L4
+%              L1
 
 d = 4e-6;                   % slit distance
 delta = 1e-6;               % slit width
 h = 8e-6;                   % screen height
 L = 10e-6;                  % screen distance
-NPML = [20, 20, 20, 20];    % [L1, L2, L3, L4]; 0,1:=PMC
-offset = NPML;              % Total offset from boundaries
+
+offset = [20, 20, 20, 20];                  % [L1, L2, L3, L4]; 0,1:=PMC
+bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % Total offset from boundaries
+bc.NPML = offset;
 
 %% Generate Mesh
 elem_per_wavelength = 15;
 
-dx = lambda1*(offset(3) + offset(1))/elem_per_wavelength;  % Extra space in x direction for PML
+dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 
 if use_y_symmetry
-    NPML(2) = 0;
-    offset(2) = 0;
-    dy = lambda1*(offset(4) + offset(2))/elem_per_wavelength;  % Extra space in y direction for PML
+    offset(1) = 0;
+    bc.NPML(1) = 0;
+    bc.bc(1) = 'PMC';
+    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for PML
     ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
 else
-    dy = lambda1*(offset(4) + offset(2))/elem_per_wavelength;  % Extra space in y direction for PML
+    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for PML
     ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
 end
 
 msh = cartMesh_2D(xmesh, ymesh);
 
 % Set rhs and bc vectors
-idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + NPML(3); % Transform y-indices to canonical index
+idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + offset(4); % Transform y-indices to canonical index
 jsbow = sparse(3*msh.np, 1);
 ebow1_bc = NaN(3*msh.np, 1);
 ebow2_bc = NaN(3*msh.np, 1);
@@ -115,7 +118,7 @@ end
 %% Solve Helmholtz
 
 % Create matrices
-[C, ~, ~] = createTopMats_2D(msh);
+C = createTopMats_2D(msh);
 [ds, dst, da, dat] = createGeoMats_2D(msh);
 
 meps = createMeps_2D(msh, ds, da, dat, ones(msh.np, 1), eps);
@@ -123,8 +126,10 @@ mmui = createMmui_2D(msh, ds, dst, da, ones(msh.np, 1), mui);
 
 % Solve
 if solve_eq
-    ebow1 = frequency_domain_2D(msh, C, meps, mmui, 0, jsbow, idx_bc, ebow1_bc(idx_bc), omega1, NPML);
-    ebow2 = frequency_domain_2D(msh, C, meps, mmui, 0, jsbow, idx_bc, ebow2_bc(idx_bc), omega2, NPML);
+    [bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow1_bc, jsbow);
+    ebow1 = solve_helmholtz_2d_fd(msh, W, C, meps, mmui, jsbow, e_exi, f1, bc);
+    [bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow2_bc, jsbow);
+    ebow2 = solve_helmholtz_2d_fd(msh, W, C, meps, mmui, jsbow, e_exi, f2, bc);
     ebow = ebow1 + ebow2;
 end
 
@@ -150,7 +155,7 @@ if plot_field
 end
 
 % Intensity calculation
-[I1,y] = calc_intensity(msh, ebow1', offset);
+[I1,y] = calc_intensity(msh, ebow1', offset);   % TODO: Fix offset
 I2 = calc_intensity(msh, ebow2', offset);
 I = I1 + I2;  % TODO: CAN'T add intensities!!!
 
