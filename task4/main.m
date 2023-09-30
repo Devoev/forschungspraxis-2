@@ -65,6 +65,8 @@ L = 10e-6;    % [m]
 delta = 1e-6; % [m]
 
 NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
+bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % Total offset from boundaries
+bc.NPML = NPML;
 
 %% mesh
 elem_per_wavelength = 10;
@@ -118,8 +120,14 @@ mmui = createMmui_2D(msh, ds, dst, da, ones(msh.np, 1), mu0i);
 %idx_dof = isnan(ebow1_bc);
 %idx_bc = ~idx_dof;
 
-[ebow1, hbow1] = frequency_domain_2D(msh, c, meps, mmui, 0, jsbow, idx_bc, ebow1_bc(idx_bc), omega1, NPML);
-[ebow2, hbow2] = frequency_domain_2D(msh, c, meps, mmui, 0, jsbow, idx_bc, ebow2_bc(idx_bc), omega2, NPML);
+%[ebow1, hbow1] = frequency_domain_2D(msh, c, meps, mmui, 0, jsbow, idx_bc, ebow1_bc(idx_bc), omega1, NPML);
+%[ebow2, hbow2] = frequency_domain_2D(msh, c, meps, mmui, 0, jsbow, idx_bc, ebow2_bc(idx_bc), omega2, NPML);
+
+[bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow1_bc, jsbow);
+ebow1 = solve_helmholtz_2d_fd(msh, W, c, meps, mmui, jsbow, e_exi, f1, bc);
+[bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow2_bc, jsbow);
+ebow2 = solve_helmholtz_2d_fd(msh, W, c, meps, mmui, jsbow, e_exi, f2, bc);
+
 ebow = ebow1 + ebow2;
 ebow_z = ebow((2/3)*length(ebow)+1:length(ebow));
 
