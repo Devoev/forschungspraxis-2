@@ -3,7 +3,7 @@ function vec = boxMesher_2D(msh, boxes, defaultvalue)
 %% Description
 %
 % Function to assign material constants to regions on the 2D calculation
-% domain defined in boxes
+% domain defined by the parameter boxes
 %
 % Input
 % msh               2D mesh object
@@ -19,8 +19,8 @@ function vec = boxMesher_2D(msh, boxes, defaultvalue)
 %                               boxes(2).value = 1;
 %
 % Output
-% vec               Vector containing the material parameter to each volume
-%                   on the mesh
+% vec               Vector containing the material parameter to each
+%                   primary volume of the mesh; size (3*np x 1)
 
 
 %% Function definition

@@ -5,12 +5,12 @@ function [Meps_s, Mmui_s] = calcpml_2D(msh, NPML, Meps, Mmui)
 %   NGRID   - mesh dimentions list with [nx, ny]
 %   NPML    - number of mesh layers [L1, L2, L3, L4]
 %
-%          L2 (top)               y
+%          L3 (top)               y
 %       +++++++               o------->
-%   L3  +     +  L1           |
+%   L4  +     +  L2           |
 % (src) +     + (screen)    x | 
 %       +++++++               |
-%          L4 (btm)           v
+%          L1 (btm)           v
 %
 % Outputs:
 %   Meps_s   - permeability matrix with PML boundary material
@@ -26,10 +26,10 @@ p = 3;
 Nx = msh.ny;
 Ny = msh.nx;
 
-L1 = NPML(1); 
-L2 = NPML(2);
-L3 = NPML(3);
-L4 = NPML(4);
+L1 = NPML(2); 
+L2 = NPML(1);
+L3 = NPML(4);
+L4 = NPML(3);
 
 % init tensors ------------------------------------------------------------
 sx = sparse(ones(Nx, Ny));

@@ -8,7 +8,8 @@ function idxNotGhostEdges = getNotGhostEdges_2D(msh)
 % msh               2D mesh object
 %
 % Output
-% idxNotGhostEdges  Indices of calc relevant edges    
+% idxNotGhostEdges  Indices of calc relevant edges in a (number edges x 1)
+%                   vector
 
 
 %% Function definition
@@ -34,5 +35,8 @@ function idxNotGhostEdges = getNotGhostEdges_2D(msh)
     idxNotGhostEdges = linspace(1, 3*np, 3*np);
     idxNotGhostEdges(idxGhostEdges) = 0;
     idxNotGhostEdges = idxNotGhostEdges';
+
+    % Remove zeros from vector
+    idxNotGhostEdges = nonzeros(idxNotGhostEdges);
 
 end

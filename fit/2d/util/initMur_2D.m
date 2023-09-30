@@ -45,19 +45,19 @@ function [zedges,n_zedges, deltas] = initMur_2D(msh, open_bc)
     b3_zedges = [];
     b4_zedges = [];
 
-    if b1_bool
+    if b2_bool
         % calculate indices for boundary on the right (x = x_max)
         b1_zedges = 1+(nx-1)*Mx+(indy-1)*My + 2*np;
     end
-    if b2_bool
+    if b1_bool
         % calculate indices for boundary on the bottom (y = y_min)
         b2_zedges = 1+(indx-1)*Mx + 2*np;
     end
-    if b3_bool
+    if b4_bool
         % calculate indices for boundary on the left (x = x_min)
         b3_zedges = 1+(indy-1)*My + 2*np;
     end
-    if b4_bool
+    if b3_bool
         % calculate indices for boundary on the top (y = y_max)
         b4_zedges = 1+(indx-1)*Mx+(ny-1)*My + 2*np;
     end
