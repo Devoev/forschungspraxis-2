@@ -21,15 +21,15 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 1;         % Whether to use the symmetry in y direction
+use_y_symmetry = 0;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
 plot_field = 1;             % Plot the 2D electrical field
-plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
+plot_intensity = 0;         % Plot the numerically calculated intensity on the screen
 plot_intensity_colored = 0; % Plot the calculated intensities in the actual light colors
-plot_intensity_ana = 1;     % Plot the analytically calculated intensity on the screen
-calc_intensity_err = 1;     % Calculates the error between analytical and numerical solutions
+plot_intensity_ana = 0;     % Plot the analytically calculated intensity on the screen
+calc_intensity_err = 0;     % Calculates the error between analytical and numerical solutions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -130,31 +130,19 @@ end
 
 
 %% Postprocessing
-idx_edge_x = 1:msh.np;
-idx_edge_y = 1+msh.np:2*msh.np;
-idx_edge_z = 1+2*msh.np:3*msh.np;
-ebow1_x = ebow1(idx_edge_x);
-ebow1_y = ebow1(idx_edge_y);
-ebow1_z = ebow1(idx_edge_z);
-ebow1_abs = sqrt(abs(ebow1_x).^2 + abs(ebow1_y).^2 + abs(ebow1_z).^2);
-ebow2_x = ebow2(idx_edge_x);
-ebow2_y = ebow2(idx_edge_y);
-ebow2_z = ebow2(idx_edge_z);
-ebow2_abs = sqrt(abs(ebow2_x).^2 + abs(ebow2_y).^2 + abs(ebow2_z).^2);
-ebow_x = ebow(idx_edge_x);
-ebow_y = ebow(idx_edge_y);
-ebow_z = ebow(idx_edge_z);
-ebow_abs = sqrt(abs(ebow_x).^2 + abs(ebow_y).^2 + abs(ebow_z).^2);
+
+% Field plot
+ebow_abs = calc_abs_field(msh,ebow);
 
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
     e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
     e_surf_plot = surf(X,Y,e_surf');
-    %xlim([0, L])
+    xlim([0, L])
     ylim([-h/2, h/2])
     set(e_surf_plot,'LineStyle','none')
-    set(gca,'ColorScale','log')
+    colormap hot;
     title('Absolute value of electric field','Interpreter','latex')
     xlabel('$x$ (m)','Interpreter','latex')
     ylabel('$y$ (m)','Interpreter','latex')
