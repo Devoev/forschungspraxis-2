@@ -30,7 +30,7 @@ function [ebow, hbow] = solve_helmholtz_2d_fd(msh, W, c, meps, mmui, jsbow, e_ex
 omega = 2 * pi * f;
 
 % add PML condition to material matrices
-[meps, mmui] = calcpml_2D(msh, bc.NPML, meps, mmui);
+[meps, mmui] = calcpml_2D(msh, bc, meps, mmui);
 
 % System matrix and rhs
 A = W' * (omega^2 * meps - c' * mmui * c) * W;

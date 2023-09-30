@@ -1,4 +1,4 @@
-function [Meps_s, Mmui_s] = calcpml_2D(msh, NPML, Meps, Mmui)
+function [Meps_s, Mmui_s] = calcpml_2D(msh, bc, Meps, Mmui)
 % calcpml2d. von A.G.
 % 
 % Inputs:
@@ -26,10 +26,17 @@ p = 3;
 Nx = msh.ny;
 Ny = msh.nx;
 
-L1 = NPML(2); 
-L2 = NPML(1);
-L3 = NPML(4);
-L4 = NPML(3);
+L1 = bc.NPML(2); 
+L2 = bc.NPML(1);
+L3 = bc.NPML(4);
+L4 = bc.NPML(3);
+
+% Calculate vacuum wave impedance
+if any(ismember(fieldnames(bc),"epsilon0"))
+    imp0 = sqrt(1/bc.mu0i/bc.epsilon0);
+else
+    imp0 = 376.73;
+end
 
 % init tensors ------------------------------------------------------------
 sx = sparse(ones(Nx, Ny));
@@ -41,7 +48,7 @@ if L2 > 1
     for nx = 1:L2
         v = nx/L2;
         % set column from inside to outside
-        sx(L2-nx+1,:) = impedance(v, L2, sigma_max, a_max, p); 
+        sx(L2-nx+1,:) = impedance(v, L2, sigma_max, a_max, p, imp0); 
     end
 end
 % add L4 direction PML
@@ -49,7 +56,7 @@ if L4 > 1
     for nx = 1:L4
         v = nx/L4;
         % set column from inside to outside
-        sx(Nx-L4+nx,:) = impedance(v, L4, sigma_max, a_max, p); 
+        sx(Nx-L4+nx,:) = impedance(v, L4, sigma_max, a_max, p, imp0); 
     end
 end
 %% calc sy tensor comp ----------------------------------------------------
@@ -58,7 +65,7 @@ if L1 > 1
     for ny = 1:L1
         v = ny/L1;
         % set row from inside to outside of boundary
-        sy(:,Ny-L1+ny) = impedance(v, L1, sigma_max, a_max, p);
+        sy(:,Ny-L1+ny) = impedance(v, L1, sigma_max, a_max, p, imp0);
     end
 end
 % add +Y direction PML
@@ -66,7 +73,7 @@ if L3 > 1
     for ny = 1:L3
         v = ny/L3;
         % set row from inside to outside of boundary
-        sy(:,L3-ny+1) = impedance(v, L3, sigma_max, a_max, p);
+        sy(:,L3-ny+1) = impedance(v, L3, sigma_max, a_max, p, imp0);
     end
 end
 
@@ -80,14 +87,15 @@ Meps_s = S*Meps;
 Mmui_s = S*Mmui;
     
 % calculate matching impedance for a certain pml layer --------------------
-function val = impedance(v, Lv, sigma_max, a_max, p)
-    imp0 = 376.73;
+function val = impedance(v, Lv, sigma_max, a_max, p, imp0)
+
     % calc sigma
     sigma = sigma_max*sin(pi*v/(2*Lv))^2;
     % calc attenuation
     a = 1+a_max*(v/Lv)^p;
     
     val = a*(1+1j*imp0*sigma);
+    
 end
 
 end

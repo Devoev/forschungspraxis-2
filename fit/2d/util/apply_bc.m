@@ -28,7 +28,7 @@ function [bc, W, e_exi, jsbow] = apply_bc(msh, bc, e_exitation, jsbow_excitation
 %                         where no excitation is defined -> Only entries
 %                         unequal to NaN at indices associated with
 %                         excitations with the value of the excitation in
-%                         frequency domain and one in time domain
+%                         frequency domain and 1 in time domain
 %   jsbow_excitation    - Vector for current excitation. Same principle as
 %                         for e_exitation
 %
