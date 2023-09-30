@@ -25,7 +25,7 @@ use_y_symmetry = 1;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
-plot_field = 1;             % Plot the 2D electrical field
+plot_field = 0;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
 plot_intensity_colored = 0; % Plot the calculated intensities in the actual light colors
 plot_intensity_ana = 1;     % Plot the analytically calculated intensity on the screen
@@ -130,51 +130,29 @@ end
 
 
 %% Postprocessing
-idx_edge_x = 1:msh.np;
-idx_edge_y = 1+msh.np:2*msh.np;
-idx_edge_z = 1+2*msh.np:3*msh.np;
-ebow1_x = ebow1(idx_edge_x);
-ebow1_y = ebow1(idx_edge_y);
-ebow1_z = ebow1(idx_edge_z);
-ebow1_abs = sqrt(abs(ebow1_x).^2 + abs(ebow1_y).^2 + abs(ebow1_z).^2);
-ebow2_x = ebow2(idx_edge_x);
-ebow2_y = ebow2(idx_edge_y);
-ebow2_z = ebow2(idx_edge_z);
-ebow2_abs = sqrt(abs(ebow2_x).^2 + abs(ebow2_y).^2 + abs(ebow2_z).^2);
-ebow_x = ebow(idx_edge_x);
-ebow_y = ebow(idx_edge_y);
-ebow_z = ebow(idx_edge_z);
-ebow_abs = sqrt(abs(ebow_x).^2 + abs(ebow_y).^2 + abs(ebow_z).^2);
 
-idx = 1+offset(2):length(ymesh)-offset(4);  % Indices at which to evaluate the field
-y = ymesh(idx);                             % y values at those indices
+% Field plot
+ebow_abs = calc_abs_field(msh,ebow);
 
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
     e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
     e_surf_plot = surf(X,Y,e_surf');
-    %xlim([0, L])
+    xlim([0, L])
     ylim([-h/2, h/2])
     set(e_surf_plot,'LineStyle','none')
-    set(gca,'ColorScale','log')
+    colormap hot;
     title('Absolute value of electric field','Interpreter','latex')
     xlabel('$x$ (m)','Interpreter','latex')
     ylabel('$y$ (m)','Interpreter','latex')
     zlabel('Absolute value','Interpreter','latex')
 end
 
-% Intensity calculation % TODO: CAN'T add intensities!!!
-idx_screen = msh.nx * (1:msh.ny) - offset(1);
-e1_screen = ebow1_abs(idx_screen)';
-e2_screen = ebow2_abs(idx_screen)';
-%e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
-e1_screen = e1_screen(idx);
-e2_screen = e2_screen(idx);
-%e_screen = e_screen(1+NPML(2):end-NPML(4));
-I1 = c*eps/2 * abs(e1_screen).^2;
-I2 = c*eps/2 * abs(e2_screen).^2;
-I = I1 + I2;
+% Intensity calculation
+[I1,y] = calc_intensity(msh, ebow1', offset);
+I2 = calc_intensity(msh, ebow2', offset);
+I = I1 + I2;  % TODO: CAN'T add intensities!!!
 
 if plot_intensity
     figure
@@ -202,14 +180,19 @@ I_farfield = I1_farfield + I2_farfield;
 I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
 I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
 I_helmholtz = I1_helmholtz + I2_helmholtz;
-if plot_intensity_ana % TODO: FIX normalization
+if plot_intensity_ana
     plot(y, I_farfield/max(I_farfield), 'r--', 'DisplayName', 'Analytical (farfield)')
     plot(y, I_helmholtz/max(I_helmholtz), 'b--', 'DisplayName', 'Analytical (Helmholtz)')
 end
 
 % Error calculation
-I_err = norm(I/max(I) - I_farfield/max(I_farfield))/norm(I_farfield/max(I_farfield));
-I_err_helmholtz = norm(I/max(I) - I_helmholtz/max(I_helmholtz))/norm(I_helmholtz/max(I_helmholtz));
+% TODO: FIX normalization
+I = I/max(I);
+I_farfield = I_farfield/max(I_farfield);
+I_helmholtz = I_helmholtz/max(I_helmholtz);
+
+I_err = norm(I - I_farfield)/norm(I_farfield);
+I_err_helmholtz = norm(I - I_helmholtz)/norm(I_helmholtz);
 if calc_intensity_err
     fprintf('Relative L2 error between numerical and farfield solution = %f%% \n', 100*I_err)
     fprintf('Relative L2 error between numerical and Helmholtz solution = %f%%', 100*I_err_helmholtz)
