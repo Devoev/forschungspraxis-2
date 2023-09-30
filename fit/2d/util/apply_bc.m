@@ -4,11 +4,20 @@ function [bc, W, e_exi, jsbow] = apply_bc(msh, bc, e_exitation, jsbow_excitation
 % solvers to realize the corresponding bc as well as the projection matrix
 % W, in order to realize the homogenious boundary conditions PEC or PMC
 %
+%          L3                 ^
+%       +++++++               |
+%   L4  +     +  L2           | 
+%       +     +             y | 
+%       +++++++               |   x
+%          L1                 o------->
+%
 % Inputs:
 %   msh                 - Mesh struct
 %   bc                  - Boundary condition struct, including the boundary 
 %                         definition by the user through e.g. 
 %                         bc.bc = ["PMC", "OPEN", "PMC", "PEC"].
+%                         The order of the conditions is: 
+%                         ["L1", "L2", "L3", "L4"]
 %                         Another possible input is the number of PML-cells 
 %                         on each side through e.g. bc.NPML = [20,20,20,20]
 %                         ONLY bc.bc is necessary, if NPML is not defined 
@@ -78,11 +87,12 @@ e_exi(idx_exci_e) = e_exitation(idx_exci_e);
 % Get DoFs, depending on electric or magnetic boundary conditions and
 % create the vector P with size 3*np, which has only ones at inidices for
 % DoFs
-P = sparse(3*np,1);
+P = ones(3*np,1);
 
 % Get all edges relevant for the calculation and first set these indices as
 % DoFs
-P(getNotGhostEdges_2D(msh)) = 1;
+idxGhostEdges = getGhostEdges_2D(msh);
+P(idxGhostEdges) = 0;
 
 % Set excitation indices to zero
 P(idx_exci_e) = 0; 
