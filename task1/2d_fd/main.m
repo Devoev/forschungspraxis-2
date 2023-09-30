@@ -146,9 +146,6 @@ ebow_y = ebow(idx_edge_y);
 ebow_z = ebow(idx_edge_z);
 ebow_abs = sqrt(abs(ebow_x).^2 + abs(ebow_y).^2 + abs(ebow_z).^2);
 
-idx = 1+offset(2):length(ymesh)-offset(4);  % Indices at which to evaluate the field
-y = ymesh(idx);                             % y values at those indices
-
 if plot_field
     figure
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
@@ -165,15 +162,8 @@ if plot_field
 end
 
 % Intensity calculation % TODO: CAN'T add intensities!!!
-idx_screen = msh.nx * (1:msh.ny) - offset(1);
-e1_screen = ebow1_abs(idx_screen)';
-e2_screen = ebow2_abs(idx_screen)';
-%e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
-e1_screen = e1_screen(idx);
-e2_screen = e2_screen(idx);
-%e_screen = e_screen(1+NPML(2):end-NPML(4));
-I1 = c*eps/2 * abs(e1_screen).^2;
-I2 = c*eps/2 * abs(e2_screen).^2;
+[I1,y] = calc_intensity(msh, ebow1', offset);
+I2 = calc_intensity(msh, ebow2', offset);
 I = I1 + I2;
 
 if plot_intensity
