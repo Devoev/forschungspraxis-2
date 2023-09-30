@@ -21,7 +21,8 @@ function [bc, W, e_exi, jsbow] = apply_bc(msh, bc, e_exitation, jsbow_excitation
 %                         Another possible input is the number of PML-cells 
 %                         on each side through e.g. bc.NPML = [20,20,20,20]
 %                         ONLY bc.bc is necessary, if NPML is not defined 
-%                         apply std. value for number of cells -> 20
+%                         apply std. value for number of cells -> 20.
+%                         If no PML desired -> 0 entry for associated side
 %   e_exitation         - Vector for electric field excitation with size 
 %                         (3*np x 1) with NaNs at the index of each edge,
 %                         where no excitation is defined -> Only entries
