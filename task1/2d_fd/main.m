@@ -158,10 +158,13 @@ end
 [I1,y] = calc_intensity(msh, ebow1', offset);
 I2 = calc_intensity(msh, ebow2', offset);
 I = I1 + I2;  % TODO: CAN'T add intensities!!!
+I1 = I1/max(I);
+I2 = I2/max(I);
+I = I/max(I);
 
 if plot_intensity
     figure
-    plot(y, I/max(I), 'DisplayName', 'Numerical', 'color', '#1e8080')
+    plot(y, I, 'DisplayName', 'Numerical', 'color', '#1e8080')
     hold on
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
@@ -171,8 +174,8 @@ if plot_intensity
 end
 
 if plot_intensity_colored
-    plot(y, I1/max(I), 'DisplayName', 'Wave 1', 'color', '#3d00ff')
-    plot(y, I2/max(I), 'DisplayName', 'Wave 2', 'color', '#00ff00')
+    plot(y, I1, 'DisplayName', 'Wave 1', 'color', '#3d00ff')
+    plot(y, I2, 'DisplayName', 'Wave 2', 'color', '#00ff00')
 end
 
 
@@ -182,20 +185,19 @@ end
 I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
 I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
 I_farfield = I1_farfield + I2_farfield;
+I_farfield = I_farfield/max(I_farfield);
+
 I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
 I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
 I_helmholtz = I1_helmholtz + I2_helmholtz;
+I_helmholtz = I_helmholtz/max(I_helmholtz);
+
 if plot_intensity_ana
-    plot(y, I_farfield/max(I_farfield), 'r--', 'DisplayName', 'Analytical (farfield)')
-    plot(y, I_helmholtz/max(I_helmholtz), 'b--', 'DisplayName', 'Analytical (Helmholtz)')
+    plot(y, I_farfield, 'r--', 'DisplayName', 'Analytical (farfield)')
+    plot(y, I_helmholtz, 'b--', 'DisplayName', 'Analytical (Helmholtz)')
 end
 
 % Error calculation
-% TODO: FIX normalization
-I = I/max(I);
-I_farfield = I_farfield/max(I_farfield);
-I_helmholtz = I_helmholtz/max(I_helmholtz);
-
 I_err = norm(I - I_farfield)/norm(I_farfield);
 I_err_helmholtz = norm(I - I_helmholtz)/norm(I_helmholtz);
 if calc_intensity_err
