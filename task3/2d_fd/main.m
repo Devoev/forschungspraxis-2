@@ -3,15 +3,18 @@
 clc
 clear all
 
-% Path mesh functions
-path_msh_func = '../fit/2d/mesh';
-path_mat_func = '../fit/2d/matrices';
-path_solver_func = '../fit/2d/solver';
-path_util_func = '../fit/2d/util';
-%path_verify_func = './task1/verifications';
+filePath = matlab.desktop.editor.getActiveFilename;
+[ParentFolderPath] = fileparts(filePath);
+parent = fileparts(ParentFolderPath) ;
+
+% Paths to add
+path_msh_func = append(parent, '\fit\2d\mesh');
+path_mat_func = append(parent, '\fit\2d\matrices');
+path_solver_func = append(parent, '\fit\2d\solver');
+path_util_func = append(parent, '\fit\2d\util');
+path_task      =append(parent, '\task4\2d_fd');
 
 % Add paths
-cd('../');
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -20,6 +23,8 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 thin_film = 1;
 plot_field = 1;
 plot_intensity=1;     % c)
+use_y_symmetry = 0; %ToDo add Symmetrie
+polarisation = 'y'; 
 
 
 %% Problem Definition
@@ -96,10 +101,7 @@ else
 end
 
 %% excitation
-use_y_symmetry = 0;
-polarisation = 'y'; 
-% idx_bc = msh.np+indices(~(mod(indices,msh.nx)-2*pml_space));  % idx of all L2 boundary elements
-% idx = round(msh.np*0.5)+round(msh.nx*0.5);
+
 %Excitation in wohle distance h
 idx_bc = calc_slit_idx(msh, h, use_y_symmetry, polarisation) + NPML(3); % Transform y-indices to canonical index
 jsbow = sparse(3*msh.np, 1);
@@ -109,8 +111,11 @@ ebow1_bc(idx_bc) = E1;
 ebow2_bc(idx_bc) = E2;
 
 %% Create matrices
+
 [C, ~, ~] = createTopMats_2D(msh);
 [ds, dst, da, dat] = createGeoMats_2D(msh);
+
+%% ToDo use Box mesher 
 
 meps = createMeps_2D(msh, ds, da, dat, eps, eps0);
 mmui = createMmui_2D(msh, ds, dst, da, ones(msh.np, 1), mui0);
@@ -161,10 +166,7 @@ if plot_field
 end
 
 % Intensity calculations % TODO: CAN'T add intensities!!!
-%xL_idx = all_elem(~(mod(all_elem, msh.nx)-msh.nx+2*pml_space));
-%x0_idx = all_elem(~(mod(all_elem, msh.nx)-2*pml_space));
-%e2_screen = ebow2(msh.nx * (1:msh.ny) - offset(1))';
-%e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
+
 %Indices for the screen
 xL_idx = msh.nx * (1:msh.ny) - NPML(1);
 x0_idx = (1:msh.ny) + NPML(3);
