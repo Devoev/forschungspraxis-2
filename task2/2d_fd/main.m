@@ -55,9 +55,9 @@ end
 %                y                  |
 %       ###################         |      d: distance between the
 %       #                 #         |         excitations in wave-
-%  L4   ->                #   L2    |         length
-%  x    #      Model      #         |
-%       ->                #         |      L: side index bc
+%  L4   #                 #   L2    |         length
+%  x    ->     Model      #         |
+%       #                 #         |      L: side index bc
 %       #                 #         |         [L1, L2, L3, L4]
 %       ###################         |
 %              L1
