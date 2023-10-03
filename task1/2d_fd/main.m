@@ -41,12 +41,10 @@ mui = 1/(4*pi*1e-7);
 
 lambda1 = 430e-9;   % [m]
 f1 = c/lambda1;     % [Hz]
-omega1 = 2*pi*f1;   % [1/s]
 E1 = 250;           % [V/m]
 
 lambda2 = 510e-9;   % [m]
 f2 = c/lambda2;     % [Hz]
-omega2 = 2*pi*f2;   % [1/s]
 E2 = 500;           % [V/m]
 
 if test_farfield
@@ -66,18 +64,17 @@ end
 %       ###################         |
 %              L1
 
-d = 4e-6;                   % slit distance
-delta = 1e-6;               % slit width
-h = 8e-6;                   % screen height
-L = 10e-6;                  % screen distance
+d = 4e-6;       % slit distance
+delta = 1e-6;   % slit width
+h = 8e-6;       % screen height
+L = 10e-6;      % screen distance
 
-offset = [20, 20, 20, 20];                  % [L1, L2, L3, L4]; 0,1:=PMC
-bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % Total offset from boundaries
+offset = [20, 20, 20, 20];                  % Total offset from boundaries
+bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 bc.NPML = offset;
 
 %% Generate Mesh
 elem_per_wavelength = 15;
-
 dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 
@@ -157,7 +154,7 @@ end
 % Intensity calculation
 [I1,y] = calc_intensity(msh, ebow1', offset);
 I2 = calc_intensity(msh, ebow2', offset);
-I = I1 + I2;  % TODO: CAN'T add intensities!!!
+I = I1 + I2;
 I1 = I1/max(I);
 I2 = I2/max(I);
 I = I/max(I);
