@@ -1,4 +1,4 @@
-%% Task1: Double slit
+%% Task2: Slit with reflection
 
 clc
 clear all
@@ -9,8 +9,8 @@ path_mat_func = '../fit/2d/matrices';
 path_solver_func = '../fit/2d/solver';
 path_solver_util = '../fit/2d/util';
 path_util_func = '../fit/util';
-path_verify_func = '../task1/verifications';
-path_2d_fd_func = '../task1/2d_fd';
+path_verify_func = '../task2/verifications';
+path_2d_fd_func = '../task2/2d_fd';
 
 % Add paths
 cd('../');
@@ -21,9 +21,7 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 1;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
-plot_mesh = 0;              % Plot the 2D mesh
 solve_eq = 1;               % Solve the 2D Helmholtz equation
 plot_field = 0;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
@@ -52,14 +50,14 @@ if test_farfield
     fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
 end
 
-% Problem size in wavelength        |   
+% Problem size in wavelength        |
 %               L3                  |      b: middle index
-%                y                  |         
+%                y                  |
 %       ###################         |      d: distance between the
 %       #                 #         |         excitations in wave-
-%  L4   ->                #   L2    |         length
-%  x    #      Model      #         |
-%       ->                #         |      L: side index bc
+%  L4   #                 #   L2    |         length
+%  x    ->     Model      #         |
+%       #                 #         |      L: side index bc
 %       #                 #         |         [L1, L2, L3, L4]
 %       ###################         |
 %              L1
@@ -69,47 +67,25 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 
-offset = [20, 20, 20, 20];                  % Total offset from boundaries
-bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
+offset = [0, 20, 20, 20];                   % Total offset from boundaries
+bc.bc = ["PEC", "OPEN", "OPEN", "OPEN"];    % [L1, L2, L3, L4]
 bc.NPML = offset;
 
 %% Generate Mesh
 elem_per_wavelength = 15;
 dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
-
-if use_y_symmetry
-    offset(1) = 0;
-    bc.NPML(1) = 0;
-    bc.bc(1) = 'PMC';
-    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for PML
-    ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
-else
-    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for PML
-    ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
-end
-
+dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for PML
+ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
 msh = cartMesh_2D(xmesh, ymesh);
 
 % Set rhs and bc vectors
-idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + offset(4); % Transform y-indices to canonical index
+idx_bc = calc_slit_idx(msh, d, delta, polarisation) + offset(4); % Transform y-indices to canonical index
 jsbow = sparse(3*msh.np, 1);
 ebow1_bc = NaN(3*msh.np, 1);
 ebow2_bc = NaN(3*msh.np, 1);
 ebow1_bc(idx_bc) = E1;
 ebow2_bc(idx_bc) = E2;
-
-if plot_mesh
-    [X,Y] = meshgrid(xmesh, ymesh);
-    plot(X, Y, 'blue', X', Y', 'blue')
-    hold on
-    plot(0, d/2, 'x', 'color', '#A2142F', 'linewidth', 6)
-    plot(0, -d/2, 'x', 'color', '#A2142F', 'linewidth', 6)
-    xline(0, 'red')
-    xline(L, 'red')
-    yline(-h/2, 'red')
-    yline(h/2, 'red')
-end
 
 
 %% Solve Helmholtz
@@ -142,7 +118,7 @@ if plot_field
     e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
     e_surf_plot = surf(X,Y,e_surf');
     xlim([0, L])
-    ylim([-h/2, h/2])
+    ylim([0, h/2])
     set(e_surf_plot,'LineStyle','none')
     colormap hot;
     title('Absolute value of electric field','Interpreter','latex')
@@ -166,7 +142,7 @@ if plot_intensity
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
-    xlim([-h/2, h/2])
+    xlim([0, h/2])
     legend()
 end
 
@@ -178,26 +154,18 @@ end
 
 %% verifications
 
-% Double slit and helmholtz formula
-I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
-I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
-I_farfield = I1_farfield + I2_farfield;
-I_farfield = I_farfield/max(I_farfield);
-
+% Analytical helmholtz formula
 I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
 I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
 I_helmholtz = I1_helmholtz + I2_helmholtz;
 I_helmholtz = I_helmholtz/max(I_helmholtz);
 
 if plot_intensity_ana
-    plot(y, I_farfield, 'r--', 'DisplayName', 'Analytical (farfield)')
     plot(y, I_helmholtz, 'b--', 'DisplayName', 'Analytical (Helmholtz)')
 end
 
 % Error calculation
-I_err = norm(I - I_farfield)/norm(I_farfield);
-I_err_helmholtz = norm(I - I_helmholtz)/norm(I_helmholtz);
+I_err = norm(I - I_helmholtz)/norm(I_helmholtz);
 if calc_intensity_err
-    fprintf('Relative L2 error between numerical and farfield solution = %f%% \n', 100*I_err)
-    fprintf('Relative L2 error between numerical and Helmholtz solution = %f%%', 100*I_err_helmholtz)
+    fprintf('Relative L2 error between numerical and Helmholtz solution = %f%%', 100*I_err)
 end

@@ -3,16 +3,20 @@
 clc
 clear all
 
-% Path mesh functions
-path_msh_func = './fit/mesh';
-path_mat_func = './fit/matrices';
-path_solver_func = './fit/solver';
-path_util_func = './fit/util';
-path_verify_func = './task1/verifications';
+filePath = matlab.desktop.editor.getActiveFilename;
+[ParentFolderPath] = fileparts(filePath);
+parent = fileparts(ParentFolderPath) ;
+
+% Paths to add
+path_msh_func = append(parent, '\fit\2d\mesh');
+path_mat_func = append(parent, '\fit\2d\matrices');
+path_solver_func = append(parent, '\fit\2d\solver');
+path_util_func = append(parent, '\fit\2d\util');
+path_task      =append(parent, '\task4\verifications');
 
 % Add paths
-cd('../');
-addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verify_func)
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Options
@@ -22,17 +26,13 @@ plot_intensity = 1;
 plot_intensity_ana = 1;
 calc_intensity_err = 1;
 
+use_y_symmetry = 0; %ToDo Use symmetrie
+polarisation = 'z'; 
 
 %% Problem Definition
 c0 = 3e8;            % [m/s]
 eps0 = 8.854e-12;
 mu0i = 1/(4*pi*1e-7);
-n = 2;
-
-v0 = c0;             % [m/s]
-v1 = c0/n;           % [m/s] given c = 1/sqrt(mu0 * eps0)
-% refraction idx n=2 by multiplying mu0 or eps0 for thin film area by 4
-%eps1 = 4*eps;
 rel_mui = 1;
 
 
@@ -59,9 +59,9 @@ E2 = 500;           % [V/m]
 %              L1
 
 %% geometry
+
 h = 40e-6;     % [m]
 L = 10e-6;    % [m]
-%a = 100e-9;   % [m]
 delta = 1e-6; % [m]
 
 NPML = [20, 20, 20, 20];  % [L1, L2, L3, L4]; 0,1:=PMC
@@ -69,6 +69,7 @@ bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % Total offset from boundaries
 bc.NPML = NPML;
 
 %% mesh
+
 elem_per_wavelength = 10;
 
 dx = lambda1*(NPML(3) + NPML(1))/elem_per_wavelength;  % Extra space in x direction for PML
@@ -76,11 +77,6 @@ xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 dy = lambda1*(NPML(4) + NPML(2))/elem_per_wavelength;  % Extra space in y direction for PML
 ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
 msh = cartMesh_2D(xmesh, ymesh);
-
-% border x indices of different permittivity == thin film borders
-%border1_x_idx = round((L/2)/(L/msh.nx)); 
-%border2_x_idx = border1_x_idx + round(a/(L/msh.nx));
-%actual_thickness = (border2_x_idx-border1_x_idx)*(L/msh.nx)
 
 %% excitation
 
@@ -91,11 +87,6 @@ for i = 1:length(y_slit)
 end
 idx = msh.nx * (y_idx-1) + 2*msh.np;
 
-use_y_symmetry = 1;
-polarisation = 'z'; 
-
-%indices = 1:msh.np;
-%idx = 2*msh.np+indices(~(mod(indices,msh.nx)-31));  % idx of all L2 boundary elements
 idx_bc = calc_slit_idx(msh, delta, use_y_symmetry, polarisation) + NPML(3); % Transform y-indices to canonical index
 jsbow = sparse(3*msh.np, 1);
 ebow1_bc = NaN(3*msh.np, 1);
@@ -103,25 +94,12 @@ ebow2_bc = NaN(3*msh.np, 1);
 ebow1_bc(idx_bc) = E1;
 ebow2_bc(idx_bc) = E2;
 
-% Anregung erstmal in z-Richtung (wie Task1). entspricht Aufgabe d)
-
 %% solve system
-%ebow1 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow1_bc, omega1, NPML);
-%ebow2 = solve_helmholtz_2d_te_fd(msh, eps, mui, jsbow, ebow2_bc, omega2, NPML);
 
 [c, s, st] = createTopMats_2D(msh);
 [ds, dst, da, dat] = createGeoMats_2D(msh);
-%rel_eps = sparse(1,length(ds)/3)+4;
-%rel_mui = sparse(1,length(ds)/3)+1;
 meps = createMeps_2D(msh, ds, da, dat, ones(msh.np, 1), eps0);
 mmui = createMmui_2D(msh, ds, dst, da, ones(msh.np, 1), mu0i);
-%mkaps = sparse(size(ds,1));
-
-%idx_dof = isnan(ebow1_bc);
-%idx_bc = ~idx_dof;
-
-%[ebow1, hbow1] = frequency_domain_2D(msh, c, meps, mmui, 0, jsbow, idx_bc, ebow1_bc(idx_bc), omega1, NPML);
-%[ebow2, hbow2] = frequency_domain_2D(msh, c, meps, mmui, 0, jsbow, idx_bc, ebow2_bc(idx_bc), omega2, NPML);
 
 [bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow1_bc, jsbow);
 ebow1 = solve_helmholtz_2d_fd(msh, W, c, meps, mmui, jsbow, e_exi, f1, bc);
@@ -170,10 +148,8 @@ end
 idx_screen = msh.nx * (1:msh.ny) - NPML(1);
 e1_screen = ebow1_abs(idx_screen)';
 e2_screen = ebow2_abs(idx_screen)';
-%e_screen = ebow(msh.nx * (1:msh.ny) - NPML(1))';
 e1_screen = e1_screen(idx);
 e2_screen = e2_screen(idx);
-%e_screen = e_screen(1+NPML(2):end-NPML(4));
 I1 = c0*eps0/2 * abs(e1_screen).^2;
 I2 = c0*eps0/2 * abs(e2_screen).^2;
 I = I1 + I2;
