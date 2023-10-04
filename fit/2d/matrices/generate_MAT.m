@@ -25,10 +25,13 @@ function [MAT, bc] = generate_MAT(msh, bc, material_regions, operators)
 %   MAT                 - Struct containing all edited matrices
 
 
-%% Add basic constants to boundary condition object bc
+%% Add basic constants to boundary condition object bc and MAT
 
 bc.epsilon0 = material_regions.epsilon0;
 bc.mu0i = material_regions.mu0i;
+
+MAT.epsilon0 = material_regions.epsilon0;
+MAT.mu0i = material_regions.mu0i;
 
 
 %% Generate matrices for calculation
