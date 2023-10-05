@@ -4,15 +4,14 @@ clc
 clear all
 
 filePath = matlab.desktop.editor.getActiveFilename;
-[ParentFolderPath] = fileparts(filePath);
-parent = fileparts(ParentFolderPath) ;
+baseDir = extractBefore(filePath,"task3");
 
 % Paths to add
-path_msh_func = append(parent, '\fit\2d\mesh');
-path_mat_func = append(parent, '\fit\2d\matrices');
-path_solver_func = append(parent, '\fit\2d\solver');
-path_util_func = append(parent, '\fit\2d\util');
-path_task      =append(parent, '\task4\2d_fd');
+path_msh_func = append(baseDir, 'fit\2d\mesh');
+path_mat_func = append(baseDir, 'fit\2d\matrices');
+path_solver_func = append(baseDir, 'fit\2d\solver');
+path_util_func = append(baseDir, 'fit\2d\util');
+path_task = append(baseDir, 'task4\2d_fd');
 
 % Add paths
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
