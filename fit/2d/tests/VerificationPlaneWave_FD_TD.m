@@ -69,7 +69,7 @@ f = 1e9;
 e_harm = @(t)(sin(2*pi*f*t));
 
 % Time step size for harmonic excitation
-dt = 5e-12;
+dt = 1e-11;
 
 % End time for harmonic excitation
 t_end = 6.25/f;
