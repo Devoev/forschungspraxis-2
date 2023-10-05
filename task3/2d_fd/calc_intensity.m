@@ -1,4 +1,4 @@
-function [intensity] = calc_intensity(x_pos, E1, E2, lambda1, lambda2, L, a, n)
+function [intensity] = calc_intensity(x_pos, E1, E2, lambda1, lambda2, d, a, n)
 %CALC_INTENSITY calculates the analytic values for the resulting wave
 %intensity at a list of x-positions.
 %INPUT:
@@ -7,7 +7,7 @@ function [intensity] = calc_intensity(x_pos, E1, E2, lambda1, lambda2, L, a, n)
 %   E2 - Field strnegth of second excitation
 %   lambda1 - wavelength of first excitation
 %   lambda2 - wavelength of second excitation
-%   L - distance from excitation to thin film border
+%   d - distance from excitation to thin film border
 %   a - thickness of the thin film
 %   n - refraction index of the thin film layer
 %OUTPUT:
@@ -19,8 +19,8 @@ function [intensity] = calc_intensity(x_pos, E1, E2, lambda1, lambda2, L, a, n)
 %   -->         0   * 1 *   2
 %   -->             * * *
 %   -->             * * *
-%      |------------|-----------|
-%     x=0         x=L/2        x=L
+%      |------------|
+%     x=0          x=d       
 
 eps0 = 8.854e-12;
 mu0 = 4*pi*1e-7;
@@ -38,7 +38,10 @@ d0 = 1;
 % -> border 1 to 2
 
 
+% ToDo: calc all reflection and transmission coefficients
 
+% ToDo: build complex wave equation(s) for each area
 
+% ToDo: loop over x positions and switch between cases
 
 end
