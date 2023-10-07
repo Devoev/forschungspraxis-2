@@ -21,7 +21,8 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 thin_film = 1;
 plot_field = 1;
-plot_intensity=1;     % c)
+plot_analytic = 1;
+plot_intensity = 0;     % c)
 use_y_symmetry = 0; %ToDo add Symmetrie
 polarisation = 'y'; 
 
@@ -144,7 +145,7 @@ ebow2_abs = sqrt(abs(ebow2_x).^2 + abs(ebow2_y).^2 + abs(ebow2_z).^2);
 ebow_x = ebow(idx_edge_x);
 ebow_y = ebow(idx_edge_y);
 ebow_z = ebow(idx_edge_z);
-ebow_abs = sqrt(abs(ebow_x).^2 + abs(ebow_y).^2 + abs(ebow_z).^2);
+ebow_abs = abs(abs(ebow_x).^2 + abs(ebow_y).^2 + abs(ebow_z).^2);
 
 idx = 1+NPML(2):length(ymesh)-NPML(4);  % Indices at which to evaluate the field
 y = ymesh(idx);                             % y values at those indices
@@ -158,7 +159,7 @@ if plot_field
     ylim([-h/2, h/2])
     set(e_surf_plot,'LineStyle','none')
     set(gca,'ColorScale','log')
-    title('Absolute value of magnetic field','Interpreter','latex')
+    title('Absolute value of electric field','Interpreter','latex')
     xlabel('$x$ (m)','Interpreter','latex')
     ylabel('$y$ (m)','Interpreter','latex')
     zlabel('Absolute value','Interpreter','latex')
@@ -197,6 +198,20 @@ if plot_intensity
     ylabel('Intensity $I$','Interpreter','latex')
     xlim([-h/2, h/2])
     legend()
+end
+
+if plot_analytic
+    e_analytic = analytic_sol(msh.xmesh, E1, E2, lambda1, lambda2, L/2, actual_thickness, n);
+
+    figure
+    plot(msh.xmesh, abs(e_analytic),'DisplayName', 'Numerical', 'color', '#1e8080')
+    hold on
+    title('Absolute E-Field across x-Axis (analytic)','Interpreter','latex')
+    xlabel('x Position (m)','Interpreter','latex')
+    ylabel('absolut e-Field $|E|$','Interpreter','latex')
+    xlim([0, 1.2*L])
+    
+
 end
 
 

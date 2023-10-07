@@ -25,11 +25,12 @@ function [e_pos] = analytic_sol(x_pos, E1, E2, lambda1, lambda2, d, a, n)
 dim = length(x_pos);
 e_pos = zeros(dim,1);
 
+c = 3e8;
 eps0 = 8.854e-12;
 mu0 = 4*pi*1e-7;
 % wave impedance for each area
 Z1 = sqrt(mu0/eps0);
-Z2 = sqrt(mu0/n^2*eps0);
+Z2 = sqrt(mu0/(n^2*eps0));
 Z3 = Z1;
 % wave numbers for first excitation
 k1_l1 = (2*pi)/lambda1;
