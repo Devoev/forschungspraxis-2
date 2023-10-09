@@ -11,6 +11,6 @@ function I = calc_intensity_fd(ebow_abs)
     c = 3e8;
     eps = 8.854e-12;
 
-    % Intensity calculation
-    I = c*eps/4 * ebow_abs.^2;              % Intensity formula
+    % Intensity formula
+    I = c*eps/4 * ebow_abs.^2;
 end
