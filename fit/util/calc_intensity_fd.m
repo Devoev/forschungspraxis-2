@@ -5,7 +5,7 @@ function I = calc_intensity_fd(ebow_abs)
 %   ebow_abs    - Absolute value of integrated electrical field. Vector of size (np) or smaller.
 %
 % Outputs:
-%   I       - Intensity. Vector of size(ebow_abs).
+%   I           - Intensity. Vector of size(ebow_abs).
 
     % Constants
     c = 3e8;
