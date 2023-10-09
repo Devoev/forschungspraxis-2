@@ -1,5 +1,5 @@
 function I = calc_intensity_fd(ebow_abs)
-% CALC_INTENSITY Calculates the intensity of a complex ebow in FD.
+% CALC_INTENSITY_FD Calculates the intensity of a complex ebow in FD.
 %
 % Inputs:
 %   ebow_abs    - Absolute value of integrated electrical field. Vector of size (np) or smaller.
