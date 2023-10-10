@@ -72,8 +72,8 @@ bc.NPML = offset;
 %% Generate Mesh
 
 % TD params
-dt = 1e-16;
-tend = 5/f1;
+dt = 5e-17;
+tend = 20/f1;
 nt = ceil(tend/dt);
 
 % Geo params
@@ -150,24 +150,18 @@ for i = 1:nt
     ebow(:,i+1) = ebow_new;
     hbow(:,i+1) = hbow_new;
 
-end
-
-%% Postprocessing
-
-% Field plot
-ebow_abs = calc_abs_field(msh,ebow(:,nt));  % TODO: calc abs value for all time steps
-
-if plot_field
-
-    [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-    for i = 1:nt
-        figure
-        ebow_abs = calc_abs_field(msh,ebow(:,i));
+    if plot_field & mod(i, 10)
+        [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
+        ebow_abs = calc_abs_field(msh,ebow_new);
         e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
+
+        figure(1)
         e_surf_plot = surf(X,Y,e_surf');
+
         xlim([0, L])
         ylim([-h/2, h/2])
         set(e_surf_plot,'LineStyle','none')
+        view(2)
         colormap hot;
         title('Absolute value of electric field','Interpreter','latex')
         xlabel('$x$ (m)','Interpreter','latex')
@@ -175,7 +169,13 @@ if plot_field
         zlabel('Absolute value','Interpreter','latex')
         drawnow
     end
+
 end
+
+%% Postprocessing
+
+% Field plot
+ebow_abs = calc_abs_field(msh,ebow(:,nt));  % TODO: calc abs value for all time steps
 
 return
 
