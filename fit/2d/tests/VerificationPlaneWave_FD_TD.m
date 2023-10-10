@@ -89,7 +89,7 @@ n = 1 + (x_h-1)*Mx + ((1:ny)-1)*My;
 % Polarization of E in z-direction
 e_exitation(n+2*np) = 1;  
 % Polarization of E in y-direction
-e_exitation(n+1*np) = 1*dy;  
+% e_exitation(n+1*np) = 1*dy;  
 
 
 %% Apply boundary conditions and get excitation vectors for the simulation
@@ -107,6 +107,11 @@ e_exitation(n+1*np) = 1*dy;
 [ebow_freq, hbow_freq] = solve_helmholtz_2d_fd(msh, W, MAT.c, MAT.meps, MAT.mmui, jsbow, e_exi, f, bc);
 
 
+%% Calculate power emitted through each surface
+
+S_freq = CalcPowerSurfaceXY(msh, ebow_freq, hbow_freq, MAT.ds, MAT.dst, MAT.da);
+
+
 %% Simulate in time domain
 
 % Initialize open boundary condition if needed
@@ -119,7 +124,8 @@ hbow_new = sparse(3*np,1);
 % Add inverse permittivity matrix
 MAT.mepsi = nullInv(MAT.meps);
 
-% Plot parameter for "movie"
+% Initialize calculation of avarage power
+S_td = zeros(3*np,1);
 
 % Calculate time steps
 for t = linspace(0,t_end,ceil(t_end/dt))
@@ -138,6 +144,11 @@ for t = linspace(0,t_end,ceil(t_end/dt))
     % Apply open boundary with mur condition
     ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
 
+    % Sum up power through each surface
+    if t >= t_end - 1/f
+        S_td = S_td + CalcPowerSurfaceXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst, MAT.da);
+    end
+
 end
 
 
@@ -155,6 +166,12 @@ x_offste = xmesh(x_h);
 e_analytic = cos(k * (xmesh(x_indices)-x_offste));
 h_analytic = cos(k * (xmesh(x_indices)-x_offste+dx/2))/Z;
 h_analytic(x_h-51+1:end) = -h_analytic(x_h-51+1:end);
+
+% Analytical solution for power emitted in negative x-direction
+power_neg_x = -0.5 / Z * (ny-3)*dy;
+
+% Analytical solution for power emitted in positive x-direction
+power_pos_x = 0.5 / Z * (ny-3)*dy;
 
 % Plot electric field
 figure(1)
@@ -193,106 +210,126 @@ disp(['Error magnetic field FD: ', num2str(error_H_FD)]);
 disp(['Error magnetic field TD: ', num2str(error_H_TD)]);
 
 
-%% Edit boundary conditions for polarization of E in y-direction
-bc.bc = ["PEC", "OPEN", "PEC", "OPEN"];
+%% Compare numerical calculated emitted power with analytical results
 
+% Calculate error power emitted to yz-plane at xmesh(52) 
+n_power = 1 + (52-1) * Mx + ((1:ny)-1) * My + np;
+relative_err_neg_x_fd = abs((sum(real(S_freq(n_power))) - power_neg_x))/abs(power_neg_x);
+relative_err_neg_x_td = abs((sum(S_td(n_power))/(ny-3) - power_neg_x))/abs(power_neg_x);
 
-%% Apply boundary conditions and get excitation vectors for the simulation
-
-[bc, W, e_exi, jsbow] = apply_bc(msh, bc, e_exitation, jsbow_excitation);
-
-
-%% Generate matrices for calculation
-
-[MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); %#ok<NBRAK2> 
-
-
-%% Simulate in frequency domain
-
-[ebow_freq, hbow_freq] = solve_helmholtz_2d_fd(msh, W, MAT.c, MAT.meps, MAT.mmui, jsbow, e_exi, f, bc);
-
-
-%% Simulate in time domain
-
-% Initialize open boundary condition if needed
-[mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
-
-% Initialize ebow and hbow
-ebow_new = sparse(3*np,1);
-hbow_new = sparse(3*np,1);
-
-% Add inverse permittivity matrix
-MAT.mepsi = nullInv(MAT.meps);
-
-% Plot parameter for "movie"
-
-% Calculate time steps
-for t = linspace(0,t_end,ceil(t_end/dt))
-
-    % Old values
-    ebow_old = ebow_new;
-    hbow_old = hbow_new;
-
-    % Calculate value for excitation
-    e_exi_old = e_exi * e_harm(t);
-    e_exi_new = e_exi * e_harm(t+1);
-
-    % Execute timestep with leapfrog
-    [ebow_new,hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
-
-    % Apply open boundary with mur condition
-    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
-
-end
-
-
-%% Plot results for wave with polarization of E in y-direction 
-
-% Indices for edges of quantites to plot
-x_indices = (51:max(size(xmesh))-50);
-y_indices = ceil(max(size(ymesh))/3);
-idx_plot =  1 + (x_indices-1) * Mx + (y_indices-1) * My;
-
-% Analytical solution for electric and magnetic field field
-k = 2*pi*f*sqrt(MAT.epsilon0/MAT.mu0i);
-Z = sqrt(1/MAT.epsilon0/MAT.mu0i);
-x_offste = xmesh(x_h);
-e_analytic = cos(k * (xmesh(x_indices)-x_offste));
-h_analytic = -cos(k * (xmesh(x_indices)-x_offste+dx/2))/Z;
-h_analytic(x_h-51+1:end) = -h_analytic(x_h-51+1:end);
-
-% Plot electric field
-figure(2)
-subplot(2,1,1);
-plot(xmesh(x_indices), e_analytic, xmesh(x_indices), real(ebow_freq(idx_plot+np))/dy, xmesh(x_indices), ebow_new(idx_plot+np)/dy);
-xlim([0  3]);
-ylim([-1.5 1.5]);
-legend({'Analytic','Numerical FD', 'Numerical TD'},'Location','southwest');
-title('E polarized in y-direction: E in y-direction')
-
-% Plot magnetic field
-subplot(2,1,2);
-plot(xmesh(x_indices)-dx/2,h_analytic,xmesh(x_indices)-dx/2,real(hbow_freq(idx_plot+2*np)),xmesh(x_indices)-dx/2,hbow_old(idx_plot+2*np));
-xlim([0  3]);
-ylim([-1.5/Z  1.5/Z]);
-legend({'Analytic','Numerical FD', 'Numerical TD'},'Location','southwest');
-title('E polarized in y-direction: H in z-direction')
-drawnow
-
-
-%% Calculate errors for wave with polarization of E in z-direction 
-
-% Errors electric field
-error_E_FD = norm(real(ebow_freq(idx_plot+np))/dy - e_analytic') / norm(e_analytic);
-error_E_TD = norm(ebow_new(idx_plot+np)/dy - e_analytic') / norm(e_analytic);
-
-% Errors magnetic field
-error_H_FD = norm(real(hbow_freq(idx_plot+2*np)) - h_analytic') / norm(h_analytic);
-error_H_TD = norm(hbow_old(idx_plot+2*np) - h_analytic') / norm(h_analytic);
+% Calculate error power emitted to yz-plane at xmesh(354) 
+n_power = 1 + (354-1) * Mx + ((1:ny)-1) * My + np;
+relative_err_pos_x_fd = abs((sum(real(S_freq(n_power))) - power_pos_x))/abs(power_pos_x);
+relative_err_pos_x_td = abs((sum(S_td(n_power))/(ny-3) - power_pos_x))/abs(power_pos_x);
 
 % Display errors:
-disp('Errors for electromagnetic field with polarization of E in y-direction:');
-disp(['Error electric field FD: ', num2str(error_E_FD)]);
-disp(['Error electric field TD: ', num2str(error_E_TD)]);
-disp(['Error magnetic field FD: ', num2str(error_H_FD)]);
-disp(['Error magnetic field TD: ', num2str(error_H_TD)]);
+disp('Relative errors for emitted power in positive and negative x-direction:');
+disp(['Relative error negative x-direction FD: ', num2str(relative_err_neg_x_fd)]);
+disp(['Relative error negative x-direction TD: ', num2str(relative_err_neg_x_td)]);
+disp(['Relative error positive x-direction FD: ', num2str(relative_err_pos_x_fd)]);
+disp(['Relative error positive x-direction TD: ', num2str(relative_err_pos_x_td)]);
+
+
+% %% Edit boundary conditions for polarization of E in y-direction
+% bc.bc = ["PEC", "OPEN", "PEC", "OPEN"];
+% 
+% 
+% %% Apply boundary conditions and get excitation vectors for the simulation
+% 
+% [bc, W, e_exi, jsbow] = apply_bc(msh, bc, e_exitation, jsbow_excitation);
+% 
+% 
+% %% Generate matrices for calculation
+% 
+% [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); %#ok<NBRAK2> 
+% 
+% 
+% %% Simulate in frequency domain
+% 
+% [ebow_freq, hbow_freq] = solve_helmholtz_2d_fd(msh, W, MAT.c, MAT.meps, MAT.mmui, jsbow, e_exi, f, bc);
+% 
+% 
+% %% Simulate in time domain
+% 
+% % Initialize open boundary condition if needed
+% [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
+% 
+% % Initialize ebow and hbow
+% ebow_new = sparse(3*np,1);
+% hbow_new = sparse(3*np,1);
+% 
+% % Add inverse permittivity matrix
+% MAT.mepsi = nullInv(MAT.meps);
+% 
+% % Plot parameter for "movie"
+% 
+% % Calculate time steps
+% for t = linspace(0,t_end,ceil(t_end/dt))
+% 
+%     % Old values
+%     ebow_old = ebow_new;
+%     hbow_old = hbow_new;
+% 
+%     % Calculate value for excitation
+%     e_exi_old = e_exi * e_harm(t);
+%     e_exi_new = e_exi * e_harm(t+1);
+% 
+%     % Execute timestep with leapfrog
+%     [ebow_new,hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
+% 
+%     % Apply open boundary with mur condition
+%     ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
+% 
+% end
+% 
+% 
+% %% Plot results for wave with polarization of E in y-direction 
+% 
+% % Indices for edges of quantites to plot
+% x_indices = (51:max(size(xmesh))-50);
+% y_indices = ceil(max(size(ymesh))/3);
+% idx_plot =  1 + (x_indices-1) * Mx + (y_indices-1) * My;
+% 
+% % Analytical solution for electric and magnetic field field
+% k = 2*pi*f*sqrt(MAT.epsilon0/MAT.mu0i);
+% Z = sqrt(1/MAT.epsilon0/MAT.mu0i);
+% x_offste = xmesh(x_h);
+% e_analytic = cos(k * (xmesh(x_indices)-x_offste));
+% h_analytic = -cos(k * (xmesh(x_indices)-x_offste+dx/2))/Z;
+% h_analytic(x_h-51+1:end) = -h_analytic(x_h-51+1:end);
+% 
+% % Plot electric field
+% figure(2)
+% subplot(2,1,1);
+% plot(xmesh(x_indices), e_analytic, xmesh(x_indices), real(ebow_freq(idx_plot+np))/dy, xmesh(x_indices), ebow_new(idx_plot+np)/dy);
+% xlim([0  3]);
+% ylim([-1.5 1.5]);
+% legend({'Analytic','Numerical FD', 'Numerical TD'},'Location','southwest');
+% title('E polarized in y-direction: E in y-direction')
+% 
+% % Plot magnetic field
+% subplot(2,1,2);
+% plot(xmesh(x_indices)-dx/2,h_analytic,xmesh(x_indices)-dx/2,real(hbow_freq(idx_plot+2*np)),xmesh(x_indices)-dx/2,hbow_old(idx_plot+2*np));
+% xlim([0  3]);
+% ylim([-1.5/Z  1.5/Z]);
+% legend({'Analytic','Numerical FD', 'Numerical TD'},'Location','southwest');
+% title('E polarized in y-direction: H in z-direction')
+% drawnow
+% 
+% 
+% %% Calculate errors for wave with polarization of E in z-direction 
+% 
+% % Errors electric field
+% error_E_FD = norm(real(ebow_freq(idx_plot+np))/dy - e_analytic') / norm(e_analytic);
+% error_E_TD = norm(ebow_new(idx_plot+np)/dy - e_analytic') / norm(e_analytic);
+% 
+% % Errors magnetic field
+% error_H_FD = norm(real(hbow_freq(idx_plot+2*np)) - h_analytic') / norm(h_analytic);
+% error_H_TD = norm(hbow_old(idx_plot+2*np) - h_analytic') / norm(h_analytic);
+% 
+% % Display errors:
+% disp('Errors for electromagnetic field with polarization of E in y-direction:');
+% disp(['Error electric field FD: ', num2str(error_E_FD)]);
+% disp(['Error electric field TD: ', num2str(error_E_TD)]);
+% disp(['Error magnetic field FD: ', num2str(error_H_FD)]);
+% disp(['Error magnetic field TD: ', num2str(error_H_TD)]);
