@@ -126,6 +126,7 @@ MAT.mepsi = nullInv(MAT.meps);
 
 % Initialize calculation of avarage power
 S_td = zeros(3*np,1);
+i_steps = 0;
 
 % Calculate time steps
 for t = linspace(0,t_end,ceil(t_end/dt))
@@ -147,9 +148,13 @@ for t = linspace(0,t_end,ceil(t_end/dt))
     % Sum up power through each surface
     if t >= t_end - 1/f
         S_td = S_td + CalcPowerSurfaceXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst, MAT.da);
+        i_steps = i_steps + 1;
     end
 
 end
+
+% Get time avarage of the power through each surface
+S_td = S_td/i_steps;
 
 
 %% Plot results for wave with polarization of E in z-direction 
@@ -215,12 +220,12 @@ disp(['Error magnetic field TD: ', num2str(error_H_TD)]);
 % Calculate error power emitted to yz-plane at xmesh(52) 
 n_power = 1 + (52-1) * Mx + ((1:ny)-1) * My + np;
 relative_err_neg_x_fd = abs((sum(real(S_freq(n_power))) - power_neg_x))/abs(power_neg_x);
-relative_err_neg_x_td = abs((sum(S_td(n_power))/(ny-3) - power_neg_x))/abs(power_neg_x);
+relative_err_neg_x_td = abs((sum(S_td(n_power)) - power_neg_x))/abs(power_neg_x);
 
 % Calculate error power emitted to yz-plane at xmesh(354) 
 n_power = 1 + (354-1) * Mx + ((1:ny)-1) * My + np;
 relative_err_pos_x_fd = abs((sum(real(S_freq(n_power))) - power_pos_x))/abs(power_pos_x);
-relative_err_pos_x_td = abs((sum(S_td(n_power))/(ny-3) - power_pos_x))/abs(power_pos_x);
+relative_err_pos_x_td = abs((sum(S_td(n_power)) - power_pos_x))/abs(power_pos_x);
 
 % Display errors:
 disp('Relative errors for emitted power in positive and negative x-direction:');
