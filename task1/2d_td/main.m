@@ -72,12 +72,12 @@ bc.NPML = offset;
 %% Generate Mesh
 
 % TD params
-dt = 5e-17;
+dt = 8e-17;
 tend = 20/f1;
 nt = ceil(tend/dt);
 
 % Geo params
-elem_per_wavelength = 15;
+elem_per_wavelength = 10;
 dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for PML
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 
@@ -109,22 +109,20 @@ material_regions.boxesMuiR = boxesMuiR;
 % Set rhs and bc vectors
 idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + offset(4); % Transform y-indices to canonical index
 jsbow_bc = NaN(3*msh.np, 1);
-ebow1_bc = NaN(3*msh.np, 1);
-ebow2_bc = NaN(3*msh.np, 1);
-ebow1_bc(idx_bc) = 1;
-ebow2_bc(idx_bc) = 1;
+ebow_bc = NaN(3*msh.np, 1);
+ebow_bc(idx_bc) = 1;
 
 
 %% Solve Helmholtz
 
 % Apply bc and create matrices
-[bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow1_bc, jsbow_bc);
+[bc, W, ebow_bc, jsbow] = apply_bc(msh, bc, ebow_bc, jsbow_bc);
 [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]);
 MAT.mepsi = nullInv(MAT.meps);
 [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % Excitation
-ebow_bc = @(t) e_exi * cos(2*pi*f1*t);
+ebow_exi = @(t) ebow_bc * (E1*cos(2*pi*f1*t) + E2*cos(2*pi*f2*t));
 
 % Vectors
 ebow = sparse(3*msh.np, nt);
@@ -137,8 +135,8 @@ for i = 1:nt
     % Save old and new values
     ebow_old = ebow(:,i);
     hbow_old = hbow(:,i);
-    e_exi_old = ebow_bc(t);
-    e_exi_new = ebow_bc(t+1);
+    e_exi_old = ebow_exi(t);
+    e_exi_new = ebow_exi(t+1);
 
     % Calc leapfrog
     [ebow_new, hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
