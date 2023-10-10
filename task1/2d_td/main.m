@@ -65,15 +65,14 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 
-offset = [20, 20, 20, 20];                  % Total offset from boundaries
+offset = [5,5,5,5];                         % Total offset from boundaries  TODO: FIX offsets
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
-bc.NPML = offset;
 
 %% Generate Mesh
 
 % TD params
 dt = 8e-17;
-tend = 20/f1;
+tend = 30/f1;
 nt = ceil(tend/dt);
 
 % Geo params
