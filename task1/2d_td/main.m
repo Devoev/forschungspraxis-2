@@ -127,6 +127,7 @@ ebow_exi = @(t) ebow_bc * (E1*cos(2*pi*f1*t) + E2*cos(2*pi*f2*t));
 % Vectors
 ebow = sparse(3*msh.np, nt);
 hbow = sparse(3*msh.np, nt);
+ebow_abs = sparse(msh.np, nt);
 
 % Solve
 for i = 1:nt
@@ -147,11 +148,11 @@ for i = 1:nt
     % Save ebow and hbow
     ebow(:,i+1) = ebow_new;
     hbow(:,i+1) = hbow_new;
+    ebow_abs(:,i+1) = calc_abs_field(msh,ebow_new);
 
     if plot_field & mod(i, 10)
         [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-        ebow_abs = calc_abs_field(msh,ebow_new);
-        e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
+        e_surf = reshape(ebow_abs(:,i+1), [msh.nx, msh.ny]);
 
         figure(1)
         e_surf_plot = surf(X,Y,e_surf');
@@ -171,9 +172,6 @@ for i = 1:nt
 end
 
 %% Postprocessing
-
-% Field plot
-ebow_abs = calc_abs_field(msh,ebow(:,nt));  % TODO: calc abs value for all time steps
 
 return
 
