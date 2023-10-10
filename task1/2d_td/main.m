@@ -10,18 +10,18 @@ path_solver_func = '../fit/2d/solver';
 path_solver_util = '../fit/2d/util';
 path_util_func = '../fit/util';
 path_verify_func = '../task1/verifications';
-path_2d_fd_func = '../task1/2d_fd';
+path_2d_td_func = '../task1/2d_td';
 
 % Add paths
 cd('../');
-addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_util_func, path_verify_func, path_2d_fd_func)
+addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_util_func, path_verify_func, path_2d_td_func)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 0;         % Whether to use the symmetry in y direction
+use_y_symmetry = 1;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_field = 1;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
@@ -173,14 +173,8 @@ end
 
 %% Postprocessing
 
-return
-
 % Intensity calculation
-[I1,y] = calc_intensity(msh, ebow1', offset);
-I2 = calc_intensity(msh, ebow2', offset);
-I = I1 + I2;
-I1 = I1/max(I);
-I2 = I2/max(I);
+[I,y] = calc_intensity(msh, ebow_abs, offset);
 I = I/max(I);
 
 if plot_intensity

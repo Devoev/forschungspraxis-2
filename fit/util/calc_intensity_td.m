@@ -1,18 +1,21 @@
-function I = calc_intensity_td(ebow)
+function I = calc_intensity_td(ebow_abs)
 % CALC_INTENSITY_TD Calculates the time averaged intensity of ebow in TD.
 %
 % Inputs:
-%   ebow    - Integrated electrical field over time. Matrix of size (3*np,nt).
+%   ebow_abs    - Absolute value of integrated electrical field over time. Matrix of size (n,nt) with some n<=np.
 %
 % Outputs:
-%   I       - Intensity. Vector of size(3*np).
+%   I           - Intensity. Vector of size(n).
 
-    % Constants
-    c = 3e8;
-    eps = 8.854e-12;
+    [n, nt] = size(ebow_abs);
+    ebow_abs = full(ebow_abs);
 
-    [n, nt] = size(ebow);
+    % Calculate intensity over time
+    It = zeros(n,nt);
+    for i=1:nt
+        It(:,i) = calc_intensity_fd(ebow_abs(:,i));
+    end
 
-    % Intensity formula
-    I = c*eps/4 * ebow(0).^2;   % TODO: Add time averaging
+    % Average intensity
+    I = arrayfun(@(i) mean(It(i,:)), 1:n);
 end
