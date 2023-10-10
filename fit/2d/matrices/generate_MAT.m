@@ -40,6 +40,12 @@ MAT.mu0i = material_regions.mu0i;
 [c, s, st] = createTopMats_2D(msh);
 [ds, dst, da, dat] = createGeoMats_2D(msh);
 
+% Add geometrical matrices to MAT
+MAT.ds = ds;
+MAT.dst = dst;
+MAT.da = da;
+MAT.dat = dat;
+
 % Create permittivity matrix if associated regions are defines
 if any(ismember(fieldnames(material_regions),"boxesEpsilonR"))
     rel_eps = boxMesher_2D(msh, material_regions.boxesEpsilonR, material_regions.epsilon0);
