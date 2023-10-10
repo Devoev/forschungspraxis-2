@@ -21,9 +21,9 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 1;         % Whether to use the symmetry in y direction
+use_y_symmetry = 0;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
-plot_field = 0;             % Plot the 2D electrical field
+plot_field = 1;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
 plot_intensity_colored = 0; % Plot the calculated intensities in the actual light colors
 plot_intensity_ana = 1;     % Plot the analytically calculated intensity on the screen
@@ -34,8 +34,6 @@ calc_intensity_err = 1;     % Calculates the error between analytical and numeri
 
 %% Problem Definition
 c = 3e8;            % [m/s]
-eps = 8.854e-12;
-mui = 1/(4*pi*1e-7);
 
 lambda1 = 430e-9;   % [m]
 f1 = c/lambda1;     % [Hz]
@@ -74,7 +72,7 @@ bc.NPML = offset;
 %% Generate Mesh
 
 % TD params
-dt = 1e-11;
+dt = 1e-16;
 tend = 5/f1;
 nt = ceil(tend/dt);
 
@@ -96,6 +94,18 @@ end
 
 msh = cartMesh_2D(xmesh, ymesh);
 
+% Material params
+material_regions.epsilon0 = 8.854187e-12;
+material_regions.mu0i = 1/(pi*4e-7);
+
+boxesEpsilonR(1).box = [1, msh.nx, 1, msh.ny];
+boxesEpsilonR(1).value = 1;
+material_regions.boxesEpsilonR = boxesEpsilonR;
+
+boxesMuiR(1).box = [1, msh.nx, 1, msh.ny];
+boxesMuiR(1).value = 1;
+material_regions.boxesMuiR = boxesMuiR;
+
 % Set rhs and bc vectors
 idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + offset(4); % Transform y-indices to canonical index
 jsbow_bc = NaN(3*msh.np, 1);
@@ -109,15 +119,16 @@ ebow2_bc(idx_bc) = 1;
 
 % Apply bc and create matrices
 [bc, W, e_exi, jsbow] = apply_bc(msh, bc, ebow1_bc, jsbow_bc);
-[MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); % TODO: Fix material_regions
+[MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]);
+MAT.mepsi = nullInv(MAT.meps);
 [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % Excitation
 ebow_bc = @(t) e_exi * cos(2*pi*f1*t);
 
 % Vectors
-ebow = sparse(3*np, nt);
-hbow = sparse(3*np, nt);
+ebow = sparse(3*msh.np, nt);
+hbow = sparse(3*msh.np, nt);
 
 % Solve
 for i = 1:nt
@@ -133,7 +144,7 @@ for i = 1:nt
     [ebow_new, hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
 
     % Apply open boundary with mur cond
-    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);#
+    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
 
     % Save ebow and hbow
     ebow(:,i+1) = ebow_new;
@@ -141,26 +152,32 @@ for i = 1:nt
 
 end
 
-
 %% Postprocessing
 
 % Field plot
-ebow_abs = calc_abs_field(msh,ebow);
+ebow_abs = calc_abs_field(msh,ebow(:,nt));  % TODO: calc abs value for all time steps
 
 if plot_field
-    figure
+
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
-    e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
-    e_surf_plot = surf(X,Y,e_surf');
-    xlim([0, L])
-    ylim([-h/2, h/2])
-    set(e_surf_plot,'LineStyle','none')
-    colormap hot;
-    title('Absolute value of electric field','Interpreter','latex')
-    xlabel('$x$ (m)','Interpreter','latex')
-    ylabel('$y$ (m)','Interpreter','latex')
-    zlabel('Absolute value','Interpreter','latex')
+    for i = 1:nt
+        figure
+        ebow_abs = calc_abs_field(msh,ebow(:,i));
+        e_surf = reshape(ebow_abs, [msh.nx, msh.ny]);
+        e_surf_plot = surf(X,Y,e_surf');
+        xlim([0, L])
+        ylim([-h/2, h/2])
+        set(e_surf_plot,'LineStyle','none')
+        colormap hot;
+        title('Absolute value of electric field','Interpreter','latex')
+        xlabel('$x$ (m)','Interpreter','latex')
+        ylabel('$y$ (m)','Interpreter','latex')
+        zlabel('Absolute value','Interpreter','latex')
+        drawnow
+    end
 end
+
+return
 
 % Intensity calculation
 [I1,y] = calc_intensity(msh, ebow1', offset);
