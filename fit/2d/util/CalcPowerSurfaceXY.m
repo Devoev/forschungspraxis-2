@@ -1,9 +1,7 @@
 function [S] = CalcPowerSurfaceXY(msh, ebow, hbow, ds, dst, da)
 % CalcPowerSurfaceXY calculates the power through each surface in x- and
 % y-direction utilizing the Poyntinvector. Applyable for time and frequency
-% domain. !!! The power is only calculated on surfaces on a subdomain,
-% which is one point shorter in each direction. Only faces inside or on the
-% boundary of the subdomain are considered !!!
+% domain.
 %
 % Inputs:
 %   msh                 - Mesh struct
@@ -32,14 +30,12 @@ E = nullInv(ds) * ebow;
 H = nullInv(dst) * hbow;
 
 
-%% Calculate indices of all points in the subdomain relevant for surfaces 
-% in y-direction
-n_subdom = 1 + ((2:nx-2)-1) * Mx;
+%% Calculate power through each relevant surface in y-direction (common)
+
+% Indices for common calculation (majority of the mesh)
+n_subdom = 1 + ((1:nx-1)-1) * Mx;
 n_subdom = repmat(n_subdom, ny-2, 1)' + My * (1:ny-2);
-n_subdom = reshape(n_subdom, (nx-3)*(ny-2), 1);
-
-
-%% Calculate power through each relevant surface in y-direction 
+n_subdom = reshape(n_subdom, (nx-1)*(ny-2), 1);
 
 % Calculate z-component of the electric field at each surface
 Ez = 1/2 * (E(n_subdom+2*np) + E(n_subdom+2*np+Mx));
@@ -58,14 +54,54 @@ Sy = zeros(np,1);
 Sy(n_subdom) = Ez .* conj(Hx) - Ex .* conj(Hz);
 
 
-%% Calculate indices of all points in the subdomain relevant for surfaces 
-% in x-direction
+%% Calculate power through each relevant surface in y-direction (y = ymin)
+
+% Indices for surfaces on boundary y = ymin
+n_subdom = 1 + ((1:nx-1)-1) * Mx;
+
+% Calculate z-component of the electric field at each surface
+Ez = 1/2 * (E(n_subdom+2*np) + E(n_subdom+2*np+Mx));
+
+% Calculate x-component of the magnetic field at each surface
+Hx = 1/2 * (H(n_subdom) + H(n_subdom+Mx));
+
+% Calculate x-component of the electric field at each surface
+Ex = E(n_subdom);
+
+% Calculate z-component of the magnetic field at each surface
+Hz = H(n_subdom+2*np);
+
+% Calculate Poyntinvector to each surface
+Sy(n_subdom) = Ez .* conj(Hx) - Ex .* conj(Hz);
+
+
+%% Calculate power through each relevant surface in y-direction (y = ymax)
+
+% Indices for surfaces on boundary y = ymax
+n_subdom = 1 + ((1:nx-1)-1) * Mx + (ny-1) * My;
+
+% Calculate z-component of the electric field at each surface
+Ez = 1/2 * (E(n_subdom+2*np) + E(n_subdom+2*np+Mx));
+
+% Calculate x-component of the magnetic field at each surface
+Hx = 1/2 * (H(n_subdom-My) + H(n_subdom+Mx-My));
+
+% Calculate x-component of the electric field at each surface
+Ex = E(n_subdom);
+
+% Calculate z-component of the magnetic field at each surface
+Hz = H(n_subdom+2*np-My);
+
+% Calculate Poyntinvector to each surface
+Sy(n_subdom) = Ez .* conj(Hx) - Ex .* conj(Hz);
+
+
+%% Calculate power through each relevant surface in x-direction (common)
+
+% Indices for common calculation (majority of the mesh)
 n_subdom = 1 + ((2:nx-1)-1) * Mx;
-n_subdom = repmat(n_subdom, ny-3, 1)' + My * (1:ny-3);
-n_subdom = reshape(n_subdom, (nx-2)*(ny-3), 1);
-
-
-%% Calculate power through each relevant surface in x-direction 
+n_subdom = repmat(n_subdom, ny-1, 1)' + My * (0:ny-2);
+n_subdom = reshape(n_subdom, (nx-2)*(ny-1), 1);
 
 % Calculate y-component of the electric field at each surface
 Ey = E(n_subdom+np);
@@ -81,6 +117,48 @@ Hy = 1/4 * (H(n_subdom+np) + H(n_subdom+np-Mx) + H(n_subdom+np+My) + H(n_subdom+
 
 % Calculate Poyntinvector to each surface
 Sx = zeros(np,1);
+Sx(n_subdom) = Ey .* conj(Hz) - Ez .* conj(Hy);
+
+
+%% Calculate power through each relevant surface in x-direction (x = xmin)
+
+% Indices for surfaces on boundary x = xmin
+n_subdom = 1 + ((1:ny-1)-1) * My;
+
+% Calculate y-component of the electric field at each surface
+Ey = E(n_subdom+np);
+
+% Calculate z-component of the magnetic field at each surface
+Hz = H(n_subdom+2*np);
+
+% Calculate z-component of the electric field at each surface
+Ez = 1/2 * (E(n_subdom+2*np) + E(n_subdom+2*np+My));
+
+% Calculate y-component of the magnetic field at each surface
+Hy = 1/2 * (H(n_subdom+np) + H(n_subdom+np+My));
+
+% Calculate Poyntinvector to each surface
+Sx(n_subdom) = Ey .* conj(Hz) - Ez .* conj(Hy);
+
+
+%% Calculate power through each relevant surface in x-direction (x = xmax)
+
+% Indices for surfaces on boundary x = xmax
+n_subdom = 1 + (nx-1) * Mx + ((1:ny-1)-1) * My;
+
+% Calculate y-component of the electric field at each surface
+Ey = E(n_subdom+np);
+
+% Calculate z-component of the magnetic field at each surface
+Hz = H(n_subdom+2*np-Mx);
+
+% Calculate z-component of the electric field at each surface
+Ez = 1/2 * (E(n_subdom+2*np) + E(n_subdom+2*np+My));
+
+% Calculate y-component of the magnetic field at each surface
+Hy = 1/2 * (H(n_subdom+np-Mx) + H(n_subdom+np+My-Mx));
+
+% Calculate Poyntinvector to each surface
 Sx(n_subdom) = Ey .* conj(Hz) - Ez .* conj(Hy);
 
 
