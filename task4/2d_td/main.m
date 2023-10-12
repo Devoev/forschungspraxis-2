@@ -170,10 +170,13 @@ material_regions.boxesMuiR = boxesMuiR;
 [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); %#ok<NBRAK2> 
 
 
-%% Set up important time parameters for the simulation in time domain
+%% Set up parameters for the simulation in time domain for excitation 1 
 
 % Time step size
 dt = 8e-17;
+
+% Fit dt to period of excitation 1
+dt = 1/f1 / ceil(1/f1 / dt);
 
 % Calculate end time regarding the time needed for the calculation of the
 % on avarage emitted power
@@ -187,8 +190,8 @@ t_end = t_end + 3 * max(1/f1, 1/f2);
 [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % Initialize ebow and hbow
-ebow_new = sparse(3*np,1);
-hbow_new = sparse(3*np,1);
+ebow_new = zeros(3*np,1);
+hbow_new = zeros(3*np,1);
 
 % Add inverse permittivity matrix
 MAT.mepsi = nullInv(MAT.meps);
@@ -261,9 +264,24 @@ n_screen = 1 + (idx_xL - 1) * Mx + ((idx_y0:idx_h_h-1) - 1) * My;
 % Calculate y-coordinates of corresponding faces as parts of the screen
 y_coord_screen = ymesh(idx_y0:idx_h_h-1) + le/2;
 
+% Get analytical solution to compare
+[I, bright, dark] = intensityCalcSignleSlit(max(S_ex1(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_1, y_coord_screen);
+
 % Plot avarage power on screen over associated y-coordinates
 figure(2)
-plot(y_coord_screen, S_ex1(n_screen + np))
+plot(y_coord_screen, S_ex1(n_screen + np), y_coord_screen, I)
+hold on
+plot(y_coord_screen, I)
+hold on
+scatter(bright, zeros(max(size(bright)),1), "green", 'filled')
+hold on
+scatter(dark, zeros(max(size(dark)),1), "black", 'filled')
+
+
+
+
+
+
 
 
 
