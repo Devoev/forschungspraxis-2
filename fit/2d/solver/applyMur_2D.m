@@ -27,7 +27,7 @@ else
 end
 
 % Initialize new vector
-vec = sparse(vec_new);
+vec = vec_new;
 
 % boundary1
 edge = mur_edges.b1;

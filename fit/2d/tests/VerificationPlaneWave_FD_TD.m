@@ -118,8 +118,8 @@ S_freq = CalcPowerSurfaceXY(msh, ebow_freq, hbow_freq, MAT.ds, MAT.dst, MAT.da);
 [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % Initialize ebow and hbow
-ebow_new = sparse(3*np,1);
-hbow_new = sparse(3*np,1);
+ebow_new = zeros(3*np,1);
+hbow_new = zeros(3*np,1);
 
 % Add inverse permittivity matrix
 MAT.mepsi = nullInv(MAT.meps);
@@ -173,10 +173,10 @@ h_analytic = cos(k * (xmesh(x_indices)-x_offste+dx/2))/Z;
 h_analytic(x_h-51+1:end) = -h_analytic(x_h-51+1:end);
 
 % Analytical solution for power emitted in negative x-direction
-power_neg_x = -0.5 / Z * (ny-3)*dy;
+power_neg_x = -0.5 / Z;
 
 % Analytical solution for power emitted in positive x-direction
-power_pos_x = 0.5 / Z * (ny-3)*dy;
+power_pos_x = 0.5 / Z;
 
 % Plot electric field
 figure(1)

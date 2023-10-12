@@ -101,8 +101,8 @@ e_harm = @(t)(s_source * 1 * sin(2*pi*f*t));
 [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % Initialize ebow and hbow
-ebow_new = sparse(3*np,1);
-hbow_new = sparse(3*np,1);
+ebow_new = zeros(3*np,1);
+hbow_new = zeros(3*np,1);
 
 % Add inverse permittivity matrix
 MAT.mepsi = nullInv(MAT.meps);
