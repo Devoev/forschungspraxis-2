@@ -1,31 +1,24 @@
-%%         thin film geometry                  
-%              L3[PEC]                      |      b: middle index
-%                                           |         
-%        #####################----y=-h/2    |      d: distance between the
-%  [PML] ->      |   |       #   [PML]      |         excitations in wave-
-%  L4    ->      |   |       #   L2         |         length  
-%  x=0   ->      |   |       #   x=L        |
-%        ->      |   |       #              |      L: side index bc
-%        ->      |   |       #              |         [L1, L2, L3, L4]
-%        ->      |   |       #              |
-%        #####################---- y=h/2    |
-%               L/2  L/2s+a    
-%              L1 [PEC]
-clc
-clear all
+%% Add paths
 
+% Clear variables
+clc
+clear
+
+% Get parent directory
 filePath = matlab.desktop.editor.getActiveFilename;
-baseDir = extractBefore(filePath,"task3");
+[parent] = fileparts(filePath);
+parent = fileparts(parent) ;
+parent = fileparts(parent);
 
 % Paths to add
-path_msh_func = append(baseDir, 'fit\2d\mesh');
-path_mat_func = append(baseDir, 'fit\2d\matrices');
-path_solver_func = append(baseDir, 'fit\2d\solver');
-path_util_func = append(baseDir, 'fit\2d\util');
-path_task = append(baseDir, 'task4\2d_fd');
+path_msh_func = append(parent, '\fit\2d\mesh');
+path_mat_func = append(parent, '\fit\2d\matrices');
+path_solver_func = append(parent, '\fit\2d\solver');
+path_util_func = append(parent, '\fit\2d\util');
 
 % Add paths
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
+
 
 %% Define excitation
 
@@ -37,13 +30,11 @@ material_regions.mu0i = 1/(pi*4e-7);
 lambda_1    = 430e-9;
 f1          = sqrt(material_regions.mu0i/material_regions.epsilon0)/lambda_1;           
 E1          = 250;
-func_exi_1  = @(t)(E1 * sin(2*pi*f1*t));
-
 % Excitation 2
 lambda_2    = 510e-9;
 f2          = sqrt(material_regions.mu0i/material_regions.epsilon0)/lambda_2;           
 E2          = 500;
-func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
+func_exi_1  = @(t)(E1 * sin(2*pi*f1*t)+ E2 * sin(2*pi*f2*t));
 
 
 %% Define important parameters for the simulation
@@ -52,21 +43,29 @@ func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 polarization = 2;
 
 % Elements per wavelength
-elem_per_wavelength = 12;
+elem_per_wavelength = 10;
 
-% Offset in each direction in elements
-offset = [0,10,0,10];
+% Offset in each direction
+offset = [0,2,0,2];
 
-% boundary conditions
-bc.bc = ["PEC", "OPEN", "PEC", "OPEN"];   % Total offset from boundaries
+% Edit boundary conditions
+if polarization == 1
+    bc.bc = ["PMC", "OPEN", "PMC", "OPEN"];
+elseif polarization == 2
+    bc.bc = ["PEC", "OPEN", "PEC", "OPEN"];
+end
 
 
-%% domain and mesh 
+%% Edit basic calculation domain 
 
-h = 4;       % y-length of model domain [m]
-L = 10;      % x-length of model domain [m]
-a = 100e-3;     % thin film thickness [m] - located at x=L/2
+% Distance in x-direction in micro meter
+L = 10;
 
+% Screen height in micro meter
+h = 4;
+
+% Thcikness of thin film in micro meter
+a = 0.1;
 
 % Define maximal edge lenth in the mesh
 le = min(lambda_1,lambda_2)/elem_per_wavelength;
@@ -76,9 +75,12 @@ le = min(lambda_1,lambda_2)/elem_per_wavelength;
 num_e   = 10 * ceil(0.1e-6 / le);
 le      = 1e-6 / num_e;
 
+% % Calculate offset in micro meter
+% offset = offset * num_e;
+
 % Calculate number of points in x- and y-direction
 points_x = num_e * L + 1;
-points_y = num_e * h/2 + 1;
+points_y = num_e * h + 1;
 
 % Calculate xmesh with respect to the choosen offset
 x_offset1 = (-offset(4):-1) * le;
@@ -87,9 +89,9 @@ x_basic = linspace(0, L * 1e-6, points_x);
 xmesh = [x_offset1, x_basic, x_offset2];
 
 % Calculate ymesh with respect to the choosen offset
-y_offset1 = (-offset(1):-1) * le;
+y_offset1 = -h/2 * 1e-6 + (-offset(1):-1) * le;
 y_offset2 = h/2 * 1e-6 + (1:offset(3)) * le;
-y_basic = linspace(0, h/2 * 1e-6, points_y);
+y_basic = linspace(-h/2 * 1e-6, h/2 * 1e-6, points_y);
 ymesh = [y_offset1, y_basic, y_offset2];
 
 % Create basic mesh object
@@ -107,16 +109,22 @@ np = msh.np;
 idx_x0      = find(xmesh == 0);
 
 % Index of x = L/2
-idx_xL_h      = find(xmesh == L/2 * 1e-6);
+idx_xL_h    = find(xmesh == L/2 * 1e-6);
 
-% Index of x = L/2+ a
-idx_xL_h_a      = find(xmesh == (L/2+a) * 1e-6);
+% Index of x = L/2 + a
+idx_xL_h_a  = find(xmesh == (L/2 + a)* 1e-6);
+
+% Index of x = L
+idx_xL      = find(xmesh == L * 1e-6);
+
+% Index of y = -h/2
+idx_ymh_h   = find(ymesh == -h/2 * 1e-6);
 
 % Index of y = 0
 idx_y0      = find(ymesh == 0);
 
 % Index of y = h/2
-idx_h_h     = find(ymesh == h/2 * 1e-6);
+idx_yph_h   = find(ymesh == h/2 * 1e-6);
 
 
 %% Create the vectors describing the excitation
@@ -131,7 +139,7 @@ e_exitation = NaN(3*np, 1);
 if polarization == 1
 
     % Determine indices for points in the single slit
-    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_y0:idx_yd_h) - 1) * My;
+    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h) - 1) * My;
 
     % Use corresponding edges in z-direction for excitation
     e_exitation(n_exi + 2*np) = 1;
@@ -140,11 +148,10 @@ if polarization == 1
 elseif polarization == 2
 
     % Determine indices for points in the single slit
-
-    n_exi = 1 + (idx_x0 - 1) * Mx + ((1:msh.ny) - 1) * My;
+    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h-1) - 1) * My;
 
     % Use corresponding edges in y-direction for excitation
-    e_exitation(n_exi + 1*np) = 1; 
+    e_exitation(n_exi + 1*np) = le; 
 
 end
 
@@ -153,8 +160,12 @@ end
 
 % Regions for relative permittivity
 % Relative permittivity everywhere equal to one
-boxesEpsilonR(1).box = [1, nx, 1, ny];
+boxesEpsilonR(1).box = [1, idx_xL_h, 1, ny];
 boxesEpsilonR(1).value = 1;
+boxesEpsilonR(2).box = [idx_xL_h, idx_xL_h_a, 1, ny];
+boxesEpsilonR(2).value = 4;
+boxesEpsilonR(3).box = [idx_xL_h_a, nx, 1, ny];
+boxesEpsilonR(3).value = 1;
 material_regions.boxesEpsilonR = boxesEpsilonR;
 
 % Regions for inverse relative permeability
@@ -177,15 +188,15 @@ material_regions.boxesMuiR = boxesMuiR;
 %% Set up parameters for the simulation in time domain for excitation 1 
 
 % Time step size
-dt = 8e-17;
+dt = 4e-17;
 
 % Fit dt to period of excitation 1
 dt = 1/f1 / ceil(1/f1 / dt);
 
 % Calculate end time regarding the time needed for the calculation of the
 % on avarage emitted power
-t_end = sqrt((L * 1e-6)^2 + (h/2 * 1e-6)^2) / sqrt(material_regions.mu0i/material_regions.epsilon0);
-t_end = t_end + 10 * max(1/f1, 1/f2);
+t_end = L * 1e-6 / sqrt(material_regions.mu0i/material_regions.epsilon0);
+t_end = t_end + 2 * max(1/f1, 1/f2);
 
 
 %% Simulate in time domain for excitation 1 
@@ -203,6 +214,13 @@ MAT.mepsi = nullInv(MAT.meps);
 % Initialize calculation of avarage power
 S_ex1 = zeros(3*np,1);
 i_steps = 0;
+
+% Indices for plot of electric field
+if polarization == 1
+    idx_2_plot = 2*np+1:3*np;
+elseif polarization == 2
+    idx_2_plot = np+1:2*np;
+end
 
 % Calculate time steps
 steps_movie = 0;
@@ -236,7 +254,7 @@ for t = linspace(0,t_end,ceil(t_end/dt))
         steps_movie = 0;
 
         [X,Y] = meshgrid(xmesh, ymesh);
-        e_surf = reshape(ebow_new(np+1:2*np,1), [msh.nx, msh.ny]);
+        e_surf = reshape(ebow_new(idx_2_plot,1), [msh.nx, msh.ny]);
         
         figure(1)
         e_surf_plot = surf(X,Y,e_surf');
@@ -261,25 +279,16 @@ S_ex1 = S_ex1/i_steps;
 
 
 %% Plot avarage power on screen for excitation 1
-% 
-% % Calculate indices of the screen
-% n_screen = 1 + (idx_xL - 1) * Mx + ((idx_y0:idx_h_h-1) - 1) * My;
-% 
-% % Calculate y-coordinates of corresponding faces as parts of the screen
-% y_coord_screen = ymesh(idx_y0:idx_h_h-1) + le/2;
-% 
-% % Get analytical solution to compare
-% [I, bright, dark] = intensityCalcSignleSlit(max(S_ex1(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_1, y_coord_screen);
-% 
-% % Plot avarage power on screen over associated y-coordinates
-% figure(2)
-% plot(y_coord_screen, S_ex1(n_screen + np), y_coord_screen, I)
-% hold on
-% plot(y_coord_screen, I)
-% hold on
-% scatter(bright, zeros(max(size(bright)),1), "green", 'filled')
-% hold on
-% scatter(dark, zeros(max(size(dark)),1), "black", 'filled')
+
+% Calculate indices of the screen
+n_screen = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h-1) - 1) * My;
+
+% Calculate y-coordinates of corresponding faces as parts of the screen
+y_coord_screen = ymesh(idx_ymh_h:idx_yph_h-1) + le/2;
+
+% Plot avarage power on screen over associated y-coordinates
+figure(2)
+plot(y_coord_screen, S_ex1(n_screen + np))
 
 
 
