@@ -65,7 +65,7 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 
-offset = [5,5,5,5];                         % Total offset from boundaries  TODO: FIX offsets
+offset = [0,0,0,0];                         % Total offset from boundaries  TODO: FIX offsets
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 
 %% Generate Mesh
@@ -77,17 +77,16 @@ nt = ceil(tend/dt);
 
 % Geo params
 elem_per_wavelength = 10;
-dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for PML
+dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for offset
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 
 if use_y_symmetry
     offset(1) = 0;
-    bc.NPML(1) = 0;
     bc.bc(1) = 'PMC';
-    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for PML
+    dy = lambda1*offset(3)/elem_per_wavelength;  % Extra space in y direction for offset
     ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
 else
-    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for PML
+    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for offset
     ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
 end
 
