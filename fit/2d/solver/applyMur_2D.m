@@ -29,27 +29,69 @@ end
 % Initialize new vector
 vec = vec_new;
 
+%% Z-direction border edges
 % boundary1
-edge = mur_edges.b1;
-n_edge = mur_n_edges.b1;
+edge = mur_edges.b1_z;
+n_edge = mur_n_edges.b1_z;
 delta = mur_deltas(1);
 vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-
 % boundary2
-edge = mur_edges.b2;
-n_edge = mur_n_edges.b2;
+edge = mur_edges.b2_z;
+n_edge = mur_n_edges.b2_z;
 delta = mur_deltas(2);
 vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-
 % boundary3
-edge = mur_edges.b3;
-n_edge = mur_n_edges.b3;
+edge = mur_edges.b3_z;
+n_edge = mur_n_edges.b3_z;
 delta = mur_deltas(3);
 vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-
 % boundary4
-edge = mur_edges.b4;
-n_edge = mur_n_edges.b4;
+edge = mur_edges.b4_z;
+n_edge = mur_n_edges.b4_z;
+delta = mur_deltas(4);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+
+%% Y-direction border edges
+% boundary1
+edge = mur_edges.b1_y;
+n_edge = mur_n_edges.b1_y;
+delta = mur_deltas(1);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+% boundary2
+edge = mur_edges.b2_y;
+n_edge = mur_n_edges.b2_y;
+delta = mur_deltas(2);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+% boundary3
+edge = mur_edges.b3_y;
+n_edge = mur_n_edges.b3_y;
+delta = mur_deltas(3);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+% boundary4
+edge = mur_edges.b4_y;
+n_edge = mur_n_edges.b4_y;
+delta = mur_deltas(4);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+
+%% Z-direction border edges
+% boundary1
+edge = mur_edges.b1_z;
+n_edge = mur_n_edges.b1_z;
+delta = mur_deltas(1);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+% boundary2
+edge = mur_edges.b2_z;
+n_edge = mur_n_edges.b2_z;
+delta = mur_deltas(2);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+% boundary3
+edge = mur_edges.b3_z;
+n_edge = mur_n_edges.b3_z;
+delta = mur_deltas(3);
+vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+% boundary4
+edge = mur_edges.b4_z;
+n_edge = mur_n_edges.b4_z;
 delta = mur_deltas(4);
 vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
 
