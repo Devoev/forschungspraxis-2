@@ -48,14 +48,14 @@ MAT.dat = dat;
 
 % Create permittivity matrix if associated regions are defines
 if any(ismember(fieldnames(material_regions),"boxesEpsilonR"))
-    rel_eps = boxMesher_2D(msh, material_regions.boxesEpsilonR, material_regions.epsilon0);
+    rel_eps = boxMesher_2D(msh, material_regions.boxesEpsilonR, 1);
     meps = createMeps_2D(msh, ds, da, dat, rel_eps, material_regions.epsilon0);
     MAT.meps = meps;
 end
 
 % Create inverse permeability matrix if associated regions are defines
 if any(ismember(fieldnames(material_regions),"boxesMuiR"))
-    rel_mui = boxMesher_2D(msh, material_regions.boxesMuiR, material_regions.mu0i);
+    rel_mui = boxMesher_2D(msh, material_regions.boxesMuiR, 1);
     mmui = createMmui_2D(msh, ds, dst, da, rel_mui, material_regions.mu0i);
     MAT.mmui = mmui;
 end
