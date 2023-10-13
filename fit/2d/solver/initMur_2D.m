@@ -40,21 +40,40 @@ b2_zedges = [];
 b3_zedges = [];
 b4_zedges = [];
 
+b1_yedges = [];
+b2_yedges = [];
+b3_yedges = [];
+b4_yedges = [];
+
+b1_xedges = [];
+b2_xedges = [];
+b3_xedges = [];
+b4_xedges = [];
+
 if b2_bool
     % calculate indices for boundary on the right (x = x_max)
-    b1_zedges = 1+(nx-1)*Mx+(indy-1)*My + 2*np;
+    b1_xedges = 1+(nx-1)*Mx+(indy-1)*My;
+    b1_yedges = b1_xedges + np;
+    b1_zedges = b1_xedges + 2*np;
 end
 if b1_bool
     % calculate indices for boundary on the bottom (y = y_min)
-    b2_zedges = 1+(indx-1)*Mx + 2*np;
+    b2_xedges = 1+(indx-1)*Mx;
+    b2_yedges = b2_xedges + np;
+    b2_zedges = b2_xedges + 2*np;
 end
 if b4_bool
     % calculate indices for boundary on the left (x = x_min)
-    b3_zedges = 1+(indy-1)*My + 2*np;
+    b3_xedges = 1+(indy-1)*My;
+    b3_yedges = b3_xedges + np;
+    b3_zedges = b3_xedges + 2*np;
+
 end
 if b3_bool
     % calculate indices for boundary on the top (y = y_max)
-    b4_zedges = 1+(indx-1)*Mx+(ny-1)*My + 2*np;
+    b4_xedges = 1+(indx-1)*Mx+(ny-1)*My;
+    b4_yedges = b4_xedges + np;
+    b4_zedges = b4_xedges + 2*np;
 end
 
 
@@ -64,10 +83,24 @@ b2_n_zedges = b2_zedges+msh.My;
 b3_n_zedges = b3_zedges+msh.Mx;
 b4_n_zedges = b4_zedges-msh.My;
 
+b1_n_yedges = b1_n_zedges - np;
+b2_n_yedges = b2_n_zedges - np;
+b3_n_yedges = b3_n_zedges - np;
+b4_n_yedges = b4_n_zedges - np;
+
+b1_n_xedges = b1_n_zedges - 2*np;
+b2_n_xedges = b2_n_zedges - 2*np;
+b3_n_xedges = b3_n_zedges - 2*np;
+b4_n_xedges = b4_n_zedges - 2*np;
+
 
 % Save obtained data in struct
-zedges = struct('b1',b1_zedges,'b2', b2_zedges, 'b3', b3_zedges, 'b4', b4_zedges);
-n_zedges = struct('b1', b1_n_zedges, 'b2', b2_n_zedges, 'b3', b3_n_zedges, 'b4', b4_n_zedges);
+zedges = struct('b1_z',b1_zedges,'b2_z', b2_zedges, 'b3_z', b3_zedges, 'b4_z', b4_zedges, ...
+    'b1_y',b1_yedges,'b2_y', b2_yedges, 'b3_y', b3_yedges, 'b4_y', b4_yedges, ...
+    'b1_x',b1_xedges,'b2_x', b2_xedges, 'b3_x', b3_xedges, 'b4_x', b4_xedges);
+n_zedges = struct('b1_z', b1_n_zedges, 'b2_z', b2_n_zedges, 'b3_z', b3_n_zedges, 'b4_z', b4_n_zedges, ...
+    'b1_y', b1_n_yedges, 'b2_y', b2_n_yedges, 'b3_y', b3_n_yedges, 'b4_y', b4_n_yedges, ...
+    'b1_x', b1_n_xedges, 'b2_x', b2_n_xedges, 'b3_x', b3_n_xedges, 'b4_x', b4_n_xedges);
 deltas = [dx, dy, dx, dy];
 
 

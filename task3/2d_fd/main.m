@@ -145,7 +145,7 @@ ebow2_abs = sqrt(abs(ebow2_x).^2 + abs(ebow2_y).^2 + abs(ebow2_z).^2);
 ebow_x = ebow(idx_edge_x);
 ebow_y = ebow(idx_edge_y);
 ebow_z = ebow(idx_edge_z);
-ebow_abs = abs(abs(ebow_x).^2 + abs(ebow_y).^2 + abs(ebow_z).^2);
+ebow_abs = abs(abs(ebow_y));
 
 idx = 1+NPML(2):length(ymesh)-NPML(4);  % Indices at which to evaluate the field
 y = ymesh(idx);                             % y values at those indices
