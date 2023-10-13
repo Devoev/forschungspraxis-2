@@ -26,9 +26,9 @@ function idx = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation)
 
     % Transform y indices to canonical indices
     if polarisation == 'x'
-        idx = msh.nx * (y_idx-1);
+        idx = 1 + msh.nx * (y_idx-1);
     elseif polarisation == 'y'
-        idx = msh.nx * (y_idx-1) + msh.np;
+        idx = 1 + msh.nx * (y_idx-1) + msh.np;
     elseif polarisation == 'z'
-        idx = msh.nx * (y_idx-1) + 2*msh.np;
+        idx = 1 + msh.nx * (y_idx-1) + 2*msh.np;
 end
