@@ -1,5 +1,6 @@
-function [e_pos] = analytic_sol(x_pos, E1, E2, lambda1, lambda2, d, a, n)
-%ANALYTIC_SOL calculates the analytic solution at selected x-values 
+function [e_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda1, lambda2, d, a, n, daY)
+%ANALYTIC_SOL calculates the analytic solution for the plane wave intensity
+% at selected x-values (for y-polarized waves) 
 % for a thin film interference of two y-polarised plane waves.
 %INPUT:
 %   x_pos - vector of x Positions on which the intensity is calculated
@@ -10,8 +11,10 @@ function [e_pos] = analytic_sol(x_pos, E1, E2, lambda1, lambda2, d, a, n)
 %   d - distance from excitation to thin film border
 %   a - thickness of the thin film
 %   n - refraction index of the thin film
+%   daY - size of y surfaces in the model domain
 %OUTPUT:
-%   e_pos - analytic evaluations of el. field at all x positions (x_pos)
+%   s_pos - analytic evaluations of poynting vec at all x positions times
+%           Y surface => FIELD INTENSITY at x_pos
 %                     a  
 %                   |---|     
 %   -->             * * *
@@ -23,7 +26,10 @@ function [e_pos] = analytic_sol(x_pos, E1, E2, lambda1, lambda2, d, a, n)
 %     x=0          x=d       
 
 dim = length(x_pos);
+% init return values
 e_pos = zeros(dim,1);
+h_pos = zeros(dim,1);
+s_pos = zeros(dim,1);
 
 c = 3e8;
 eps0 = 8.854e-12;
@@ -45,7 +51,7 @@ k3_l2 = k1_l2;
 [R1_l1, T2_l1, R2_l1, T3_l1] = get_coefficients(k2_l1, k3_l1, a, Z1, Z2, Z3);
 [R1_l2, T2_l2, R2_l2, T3_l2] = get_coefficients(k2_l2, k3_l2, a, Z1, Z2, Z3);
 
-%% calculate analytic wave solutions
+%% calculate analytic electric field wave solutions (y-Pol)
 E1_l1 = @(x) E1*(exp(-1j*k1_l1*x) + R1_l1*exp(1j*k1_l1*x));
 E2_l1 = @(x) E1*(T2_l1*exp(-1j*k2_l1*x) + R2_l1*exp(1j*k2_l1*x));
 E3_l1 = @(x) E1*T3_l1*exp(-1j*k3_l1*x);
@@ -54,31 +60,46 @@ E1_l2 = @(x) E2*(exp(-1j*k1_l2*x) + R1_l2*exp(1j*k1_l2*x));
 E2_l2 = @(x) E2*(T2_l2*exp(-1j*k2_l2*x) + R2_l2*exp(1j*k2_l2*x));
 E3_l2 = @(x) E2*T3_l2*exp(-1j*k3_l2*x);
 
-%% loop over x positions and calculate 
-% correct analytic x offset
+%% calculate analytic magnetic field wave solutions (z-Pol)
+H1_l1 = @(x) (E1/Z1)*(exp(-1j*k1_l1*x) - R1_l1*exp(1j*k1_l1*x));
+H2_l1 = @(x) (E1/Z2)*(T2_l1*exp(-1j*k2_l1*x) - R2_l1*exp(1j*k2_l1*x));
+H3_l1 = @(x) (E1/Z3)*T3_l1*exp(-1j*k3_l1*x);
+
+H1_l2 = @(x) (E2/Z1)*(exp(-1j*k1_l2*x) - R1_l2*exp(1j*k1_l2*x));
+H2_l2 = @(x) (E2/Z2)*(T2_l2*exp(-1j*k2_l2*x) - R2_l2*exp(1j*k2_l2*x));
+H3_l2 = @(x) (E2/Z3)*T3_l2*exp(-1j*k3_l2*x);
+
+%% calculate intensity
+% shift analytic solution to match model domain
 eval_pos = x_pos - d;
+
 for idx = 1:dim
     x_val = eval_pos(idx);
     if x_val<0
-        % in layer 1
+        % in area 1 -> before thin film
         e_pos(idx) = E1_l1(x_val) + E1_l2(x_val);
+        h_pos(idx) = H1_l1(x_val) + H1_l2(x_val);
     elseif 0<=x_val && x_val<a
-        % in layer 2
+        % in area 2 -> thin film
         e_pos(idx) = E2_l1(x_val) + E2_l2(x_val);
+        h_pos(idx) = H2_l1(x_val) + H2_l2(x_val);
     else
-        % in layer 3
+        % in area 3 -> after thin film
         e_pos(idx) = E3_l1(x_val) + E3_l2(x_val);
+        h_pos(idx) = H3_l1(x_val) + H3_l2(x_val);
     end
+    % poynting vector in x direction:
+    s_pos(idx) = real((1/2)*e_pos(idx)*conj(h_pos(idx)))*daY;
 end
 
+    %% Solving the plane wave LG
     function [R1, T2, R2, T3] = get_coefficients(k2, k3, a, Z1, Z2, Z3)
         % helper term
         A = 2*exp(-1j*k2*a)*(Z3-Z2)/(Z3+Z2);
-        % ToDo: calc all reflection and transmission coefficients
+        % calc the reflection and transmission coefficients
         R2 = (2*A*Z2)/((Z1+Z2)*(1-(Z1-Z2)*A/(Z1+Z2)));
         T2 = (2*Z2 + R2*(Z1-Z2))/(Z1+Z2);
         R1 = T2+R2-1;
         T3 = (T2*exp(-1j*k2*a)+R2*exp(1j*k2*a))*exp(1j*k3*a);
     end
-
 end

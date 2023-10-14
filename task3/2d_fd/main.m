@@ -200,18 +200,18 @@ if plot_intensity
     legend()
 end
 
-if plot_analytic
-    e_analytic = analytic_sol(msh.xmesh, E1, E2, lambda1, lambda2, L/2, actual_thickness, n);
-
-    figure
-    plot(msh.xmesh, abs(e_analytic),'DisplayName', 'Numerical', 'color', '#1e8080')
-    hold on
-    title('Absolute E-Field across x-Axis (analytic)','Interpreter','latex')
-    xlabel('x Position (m)','Interpreter','latex')
-    ylabel('absolut e-Field $|E|$','Interpreter','latex')
-    xlim([0, 1.2*L])
-    
-
-end
+% if plot_analytic
+%     e_analytic = analytic_sol(msh.xmesh, E1, E2, lambda1, lambda2, L/2, actual_thickness, n);
+% 
+%     figure
+%     plot(msh.xmesh, abs(e_analytic),'DisplayName', 'Numerical', 'color', '#1e8080')
+%     hold on
+%     title('Absolute E-Field across x-Axis (analytic)','Interpreter','latex')
+%     xlabel('x Position (m)','Interpreter','latex')
+%     ylabel('absolut e-Field $|E|$','Interpreter','latex')
+%     xlim([0, 1.2*L])
+%     
+% 
+% end
 
 

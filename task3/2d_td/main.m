@@ -1,4 +1,4 @@
-%% Add paths
+%% Task3 - Thin film - time domain solver
 
 % Clear variables
 clc
@@ -15,10 +15,10 @@ path_msh_func = append(parent, '\fit\2d\mesh');
 path_mat_func = append(parent, '\fit\2d\matrices');
 path_solver_func = append(parent, '\fit\2d\solver');
 path_util_func = append(parent, '\fit\2d\util');
+path_verifications = append(parent, '\task3\verifications');
 
 % Add paths
-addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
-
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verifications)
 
 %% Define excitation
 
@@ -38,6 +38,9 @@ func_exi_1  = @(t)(E1 * sin(2*pi*f1*t)+ E2 * sin(2*pi*f2*t));
 
 
 %% Define important parameters for the simulation
+
+% intnsity plots ?
+plot_intensity = 1;
 
 % Polarization: 1 for z and 2 for y
 polarization = 2;
@@ -278,24 +281,48 @@ end
 S_ex1 = S_ex1/i_steps;
 
 
-%% Plot avarage power on screen for excitation 1
+%% Plot avarage power on x=0 and x=L screen for excitation 1
 
-% Calculate indices of the screen
-n_screen = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h-1) - 1) * My;
+if plot_intensity
 
-% Calculate y-coordinates of corresponding faces as parts of the screen
-y_coord_screen = ymesh(idx_ymh_h:idx_yph_h-1) + le/2;
+    % solve analytic
+    if polarization == 2
+        % y-polarization solution at x=0 and x=L
+        x_pos = [idx_x0, idx_xL]; 
+        analytic = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L/2, a, 2, le^2);
+    else
+        % ToDo z-polarization analytic = 0 (?)
+        analytic = [0, 0];
+    end
 
-% Plot avarage power on screen over associated y-coordinates
-figure(2)
-plot(y_coord_screen, S_ex1(n_screen + np))
+    % Calculate indices of screen at x = 0
+    n_screen_0 = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h)-1) * My;
+    % Calculate y-coordinates of corresponding faces as parts of the screen
+    y_coord_screen = msh.ymesh + le/2;
+    % Plot avarage power on screen over associated y-coordinates
+    figure(2)
+    plot(y_coord_screen, S_ex1(n_screen_0 + msh.np),'DisplayName', 'Numerical', 'color', '#1e8080')
+    hold on
+    plot(y_coord_screen, ones(1, length(y_coord_screen))*analytic(1), 'DisplayName', 'analytic', 'color', 'red')
+    hold on
+    title('Intensity at the screen at $x=0$m','Interpreter','latex')
+    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+    ylabel('Intensity $I$','Interpreter','latex')
+    %xlim([-h/2, h/2])
+    legend()
 
+    % Calculate indices of the second screen at x = L
+    n_screen_L = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h)-1) * My;
+    % Plot avarage power on screen x=L over associated y-coordinates
+    figure(3)
+    plot(y_coord_screen, S_ex1(n_screen_L + msh.np), 'DisplayName', 'Numerical', 'color', '#1e8080')
+    hold on
+    plot(y_coord_screen, ones(1,length(y_coord_screen))*analytic(2), 'DisplayName', 'analytic', 'color', 'red')
+    hold on
+    title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
+    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+    ylabel('Intensity $I$','Interpreter','latex')
+    % xlim([-h/2, h/2])
+    legend()
 
-
-
-
-
-
-
-
-
+end
