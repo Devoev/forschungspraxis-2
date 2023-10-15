@@ -21,6 +21,10 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 %% Edit basic calculation domain
 
+polarization = 'y';
+excitation = 3; % 1: x-transversal wave, 2: y-transversal wave
+                % 3: point in middle of domain
+
 % Steps of mesh
 xmesh = linspace(0,2,200);
 ymesh = linspace(0,1,100);
@@ -34,7 +38,7 @@ ny = msh.ny;
 np = msh.np;
 
 % Edit boundary conditions
-bc.bc = ["PMC", "OPEN", "PMC", "PEC"];
+bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];
 
 
 %% Edit material regions and add them to the object material_regions
@@ -73,9 +77,27 @@ jsbow_excitation = NaN(3*np, 1);
 e_exitation = NaN(3*np, 1);
 
 % Determine indices for electric field excitation
-x_L = ceil(msh.nx*3/4);
-n = 1 + (x_L-1)*Mx + ((1:ny)-1)*My + 2*np; 
+x_h = ceil(msh.nx*0.5);
+y_h = ceil(msh.ny*0.5);
 
+if polarization == 'x'
+    pol_offset = 0;
+    idx2plot = 1:msh.np;
+elseif polarization == 'y'
+    pol_offset = msh.np;
+    idx2plot = msh.np+1:2*msh.np;
+else
+    pol_offset = 2*msh.np;
+    idx2plot = 2*msh.np+1:3*msh.np;
+end
+
+if excitation == 1
+    n = 1 + (x_h-1)*Mx + ((1:ny)-1)*My + pol_offset;
+elseif excitation == 2
+    n = 1 + (y_h-1)*My + (1:nx)-1 + pol_offset;
+else
+    n = 1 + (x_h-1)*Mx + (y_h-1)*My +pol_offset;
+end
 % Set corresponding entries in e_exi to one, so these edges can be used as
 % sources
 e_exitation(n) = 1;  
@@ -134,7 +156,6 @@ for ii = 0:steps-1
     ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
 
     % Draw electric field
-    idx2plot = 2*np+1:3*np;
     [X,Y] = meshgrid(msh.xmesh, msh.ymesh);
     if mod(ii, draw_only_every)
         f = figure(1);

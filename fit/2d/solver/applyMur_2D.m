@@ -1,4 +1,4 @@
-function vec = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, vec_old, vec_new, dt, bc)
+function [e_mur] = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, e_old, e_new, dt, bc)
 % applyMur_2D applies open boundary condition for time domain for a 2D mesh
 %
 % Inputs:
@@ -27,73 +27,53 @@ else
 end
 
 % Initialize new vector
-vec = vec_new;
+e_mur = e_new;
 
-%% Z-direction border edges
+%% Z-direction ebow border edges
 % boundary1
 edge = mur_edges.b1_z;
 n_edge = mur_n_edges.b1_z;
 delta = mur_deltas(1);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
 % boundary2
 edge = mur_edges.b2_z;
 n_edge = mur_n_edges.b2_z;
 delta = mur_deltas(2);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
 % boundary3
 edge = mur_edges.b3_z;
 n_edge = mur_n_edges.b3_z;
 delta = mur_deltas(3);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
 % boundary4
 edge = mur_edges.b4_z;
 n_edge = mur_n_edges.b4_z;
 delta = mur_deltas(4);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
 
-%% Y-direction border edges
+%% X-direction ebow border edges
+% boundary1
+edge = mur_edges.b2_x;
+n_edge = mur_n_edges.b2_x;
+delta = mur_deltas(2);
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
+% boundary4
+edge = mur_edges.b4_x;
+n_edge = mur_n_edges.b4_x;
+delta = mur_deltas(2);
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
+%% Y-direction ebow border edges
 % boundary1
 edge = mur_edges.b1_y;
 n_edge = mur_n_edges.b1_y;
 delta = mur_deltas(1);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-% boundary2
-edge = mur_edges.b2_y;
-n_edge = mur_n_edges.b2_y;
-delta = mur_deltas(2);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-% boundary3
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
+% boundary4
 edge = mur_edges.b3_y;
 n_edge = mur_n_edges.b3_y;
-delta = mur_deltas(3);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-% boundary4
-edge = mur_edges.b4_y;
-n_edge = mur_n_edges.b4_y;
-delta = mur_deltas(4);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-
-%% Z-direction border edges
-% boundary1
-edge = mur_edges.b1_z;
-n_edge = mur_n_edges.b1_z;
 delta = mur_deltas(1);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-% boundary2
-edge = mur_edges.b2_z;
-n_edge = mur_n_edges.b2_z;
-delta = mur_deltas(2);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-% boundary3
-edge = mur_edges.b3_z;
-n_edge = mur_n_edges.b3_z;
-delta = mur_deltas(3);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
-% boundary4
-edge = mur_edges.b4_z;
-n_edge = mur_n_edges.b4_z;
-delta = mur_deltas(4);
-vec(edge) = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0);
+e_mur(edge) = mur(edge, n_edge, delta, dt, e_old, e_new, c0);
+
 
 
 function edgevals = mur(edge, n_edge, delta, dt, vec_old, vec_new, c0)
