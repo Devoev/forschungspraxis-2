@@ -42,6 +42,9 @@ func_exi_1  = @(t)(E1 * sin(2*pi*f1*t)+ E2 * sin(2*pi*f2*t));
 % intnsity plots ?
 plot_intensity = 1;
 
+% plot analytic ?
+plot_analytic_ypol = 1;
+
 % Polarization: 1 for z and 2 for y
 polarization = 2;
 
@@ -289,7 +292,7 @@ if plot_intensity
     if polarization == 2
         % y-polarization solution at x=0 and x=L
         x_pos = [idx_x0, idx_xL]; 
-        analytic = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L/2, a, 2, le^2);
+        [~,~,analytic] = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L*1e-6/2, a*1e-6, 2, le^2);
     else
         % ToDo z-polarization analytic = 0 (?)
         analytic = [0, 0];
@@ -308,7 +311,8 @@ if plot_intensity
     title('Intensity at the screen at $x=0$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
-    %xlim([-h/2, h/2])
+    xlim([-h/2*1e-6, h/2*1e-6])
+    ylim([0, 2e-5])
     legend()
 
     % Calculate indices of the second screen at x = L
@@ -322,7 +326,33 @@ if plot_intensity
     title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
-    % xlim([-h/2, h/2])
+    xlim([-h/2*1e-6, h/2*1e-6])
+    ylim([0, 5e-5])
     legend()
-
 end
+
+if plot_analytic_ypol
+    % Calculate analytic intensity across whole domain
+    x_pos = msh.xmesh;
+    [e_pos, h_pos, s_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L*1e-6/2, a*1e-6, 2, le^2);
+    % Plot avarage power on screen x=L over associated y-coordinates
+    figure(4)
+    plot(x_pos, e_pos./max(e_pos), 'DisplayName', 'electric field', 'color', '#1e8080')
+    hold on
+    plot(x_pos, s_pos./max(s_pos), 'DisplayName', 'intensity', 'color', 'red')
+    hold on
+    title('normalized analytic solutions across whole domain','Interpreter','latex')
+    xlabel('Position in the domain $x$ (m)','Interpreter','latex')
+    ylabel('Intensity $I$','Interpreter','latex')
+    legend()
+end
+
+figure(5)
+s_surf = reshape(S_ex1(idx_2_plot,1), [msh.nx, msh.ny]);
+s_surf_plot = surf(X,Y,s_surf');
+title('numeric calculated intensity','Interpreter','latex')
+%xlim([0, L*1e-6])
+%ylim([0, h/2*1e-6])
+set(s_surf_plot,'LineStyle','none')
+colormap hot;
+

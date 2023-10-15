@@ -1,4 +1,4 @@
-function [e_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda1, lambda2, d, a, n, daY)
+function [e_pos, h_pos, s_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda1, lambda2, d, a, n, daY)
 %ANALYTIC_SOL calculates the analytic solution for the plane wave intensity
 % at selected x-values (for y-polarized waves) 
 % for a thin film interference of two y-polarised plane waves.
@@ -89,17 +89,19 @@ for idx = 1:dim
         h_pos(idx) = H3_l1(x_val) + H3_l2(x_val);
     end
     % poynting vector in x direction:
-    s_pos(idx) = real((1/2)*e_pos(idx)*conj(h_pos(idx)))*daY;
+    s_pos(idx) = (1/2)*e_pos(idx)*conj(h_pos(idx))*daY;
 end
 
     %% Solving the plane wave LG
     function [R1, T2, R2, T3] = get_coefficients(k2, k3, a, Z1, Z2, Z3)
-        % helper term
-        A = 2*exp(-1j*k2*a)*(Z3-Z2)/(Z3+Z2);
+        % entry impedance
+        Ze = Z3*(1+Z2/Z3*tanh(1j*k2*a))/(1+Z3/Z2*tanh(1j*k2*a));
         % calc the reflection and transmission coefficients
-        R2 = (2*A*Z2)/((Z1+Z2)*(1-(Z1-Z2)*A/(Z1+Z2)));
-        T2 = (2*Z2 + R2*(Z1-Z2))/(Z1+Z2);
-        R1 = T2+R2-1;
+        R1 = (Ze-Z1)/(Ze+Z1);
+
+        T2 = Z2*(R1-1)/(2*Z1) + 1/2 + R1/2;
+        R2 = 1+R1-T2;
+        
         T3 = (T2*exp(-1j*k2*a)+R2*exp(1j*k2*a))*exp(1j*k3*a);
     end
 end
