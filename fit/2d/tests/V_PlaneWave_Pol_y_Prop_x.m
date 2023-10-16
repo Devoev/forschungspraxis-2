@@ -1,9 +1,9 @@
 %% Verification script
 
-% Polarization: Z           Propagation: X
+% Polarization: Y           Propagation: X
 
 % Verification script for the simulation of a plane wave with polarization
-% of the electric field in z-direction and propagation in x-direction. The
+% of the electric field in y-direction and propagation in x-direction. The
 % domain is devided in two region. For x<0, the relative permittivity is 1,
 % for x>0 it is 4. The simulation is executet in frequency and time domain 
 % and the results are compared with an analytic solution.
@@ -44,19 +44,26 @@ material_regions.mu0i = 1/(pi*4e-7);
 lambda      = 430e-9;
 f           = sqrt(material_regions.mu0i/material_regions.epsilon0)/lambda;           
 E           = 500;
-func_exi    = @(t)(E * sin(2*pi*f*t));
+
+% Calculate value of excitation for t=0 at -2 micro meters
+k1 = 2*pi*f * sqrt(material_regions.epsilon0/material_regions.mu0i);
+E0 = E * exp(-1j * k1 * (-2e-6)); % -> Excitation for frequency domain
+phi1 = angle(E0);
+
+% Function for excitation in time domain
+func_exi    = @(t)(E * cos(2*pi*f*t + phi1));
 
 
 %% Define important parameters for the simulation
 
 % Elements per wavelength
-elem_per_wavelength = 30;
+elem_per_wavelength = 18;
 
 % Offset in each direction in elements
-offset = [0,25,0,25];
+offset = [0,3,0,3];
 
 % Edit boundary conditions
-bc.bc = ["PMC", "OPEN", "PMC", "OPEN"];
+bc.bc = ["PEC", "OPEN", "PEC", "OPEN"];
 
 
 %% Edit basic calculation domain 
@@ -70,25 +77,22 @@ Ly = 4;
 % Define maximal edge lenth in the mesh
 le = lambda/elem_per_wavelength;
 
-% Fit edge length to be an integer divisor of 0.5 micro meter and calculate
+% Fit edge length to be an integer divisor of 1 micro meter and calculate
 % number of edges per micro meter
-num_e   = 2 * ceil(0.5e-6 / le);
+num_e   = ceil(1e-6 / le);
 le      = 1e-6 / num_e;
-
-% Calculate number of points in x- and y-direction
-points_x = num_e * Lx + 1;
-points_y = num_e * Ly + 1;
 
 % Calculate xmesh with respect to the choosen offset
 x_offset1 = -Lx/2 * 1e-6  + (-offset(4):-1) * le;
-x_offset2 = Lx/2 * 1e-6 + (1:offset(2)) * le;
-x_basic = linspace(-Lx/2 * 1e-6, Lx/2 * 1e-6, points_x);
-xmesh = [x_offset1, x_basic, x_offset2];
+x_offset2 = Lx/2 * 1e-6 + (1:offset(2)) * le/2;
+x_basic1 = linspace(-Lx/2 * 1e-6, 0 - le, 2*num_e);
+x_basic2 = linspace(0, Lx/2 * 1e-6, 4*num_e+1);
+xmesh = [x_offset1, x_basic1, x_basic2, x_offset2];
 
 % Calculate ymesh with respect to the choosen offset
 y_offset1 = -Ly/2 * 1e-6  + (-offset(1):-1) * le;
 y_offset2 = Ly/2 * 1e-6 + (1:offset(3)) * le;
-y_basic = linspace(-Ly/2 * 1e-6, Ly/2 * 1e-6, points_y);
+y_basic = linspace(-Ly/2 * 1e-6, Ly/2 * 1e-6, 4*num_e+1);
 ymesh = [y_offset1, y_basic, y_offset2];
 
 % Create basic mesh object
@@ -131,10 +135,10 @@ jsbow_excitation = NaN(3*np, 1);
 e_exitation = NaN(3*np, 1);
 
 % Determine indices for points at x = -Lx/2
-n_exi = 1 + (idx_xmLxh - 1) * Mx + ((idx_ymLyh:idx_ypLyh) - 1) * My;
+n_exi = 1 + (idx_xmLxh - 1) * Mx + ((idx_ymLyh:idx_ypLyh-1) - 1) * My;
 
-% Use corresponding edges in z-direction for excitation
-e_exitation(n_exi + 2*np) = 1;
+% Use corresponding edges in y-direction for excitation
+e_exitation(n_exi + 1*np) = 1;
 
 
 %% Edit material regions and add them to the object material_regions
@@ -163,20 +167,6 @@ material_regions.boxesMuiR = boxesMuiR;
 
 [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); %#ok<NBRAK2> 
 
-rel_eps = ones(np,1);
-n = repmat(idx_x0:nx, ny, 1)' + (0:ny-1) * My;
-n = reshape(n, 1, max(size(n) * min(size(n))));
-rel_eps(n) = 4;
-
-% Set values in ghost volumes to zero
-gvx = 1 + (nx-1)*Mx + (0:ny-1) * My;
-gvy = 1 + (0:nx-1)*Mx + (ny-1) * My;
-rel_eps(gvx) = 0;
-rel_eps(gvy) = 0;
-
-meps = createMeps_2D(msh, MAT.ds, MAT.da, MAT.dat, rel_eps, material_regions.epsilon0);
-MAT.meps = meps;
-
 
 %% Set up parameters for the simulation in time domain for excitation 1 
 
@@ -186,8 +176,8 @@ dt = 0.5 * CFL(msh, MAT);
 % Fit dt to period of excitation 1
 dt = 1/f / ceil(1/f / dt);
 
-% End time: 15.25 periods
-t_end = floor(2e-6 * (1+2) / sqrt(material_regions.mu0i/material_regions.epsilon0) * f) /f + 1/f;
+% End time
+t_end = 15/f;
 
 
 %% Simulate in time domain
@@ -215,8 +205,8 @@ for t = linspace(0,t_end,ceil(t_end/dt))
     hbow_old = hbow_new;
 
     % Calculate value for excitation
-    e_exi_old = e_exi * func_exi(t) * lz;
-    e_exi_new = e_exi * func_exi(t+1*dt) * lz;
+    e_exi_old = e_exi * func_exi(t) * le;
+    e_exi_new = e_exi * func_exi(t+1*dt) * le;
 
     % Execute timestep with leapfrog
     [ebow_new,hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
@@ -233,12 +223,12 @@ for t = linspace(0,t_end,ceil(t_end/dt))
     % Plot excitation of the electric field
     steps_movie = steps_movie + 1;
 
-    if steps_movie == 10
+    if steps_movie == 500
 
         steps_movie = 0;
 
         [X,Y] = meshgrid(xmesh, ymesh);
-        e_surf = reshape(ebow_new(2*np+1:3*np,1)/lz, [msh.nx, msh.ny]);
+        e_surf = reshape(ebow_new(1*np+1:2*np,1)/le, [msh.nx, msh.ny]);
         
         figure(1)
         e_surf_plot = surf(X,Y,e_surf');
@@ -261,8 +251,7 @@ end
 S_time = S_time/i_steps;
 
 %% Simulate in frequency domain
-
-[ebow_freq, hbow_freq] = solve_helmholtz_2d_fd(msh, W, MAT.c, MAT.meps, MAT.mmui, jsbow, -1j * e_exi * E * lz, f, bc);
+[ebow_freq, hbow_freq] = solve_helmholtz_2d_fd(msh, W, MAT.c, MAT.meps, MAT.mmui, jsbow,e_exi * E0 * le, f, bc);
 
 
 %% Calculate power emitted through each surface
@@ -278,7 +267,7 @@ idx_2_plot2 = 1 + ((idx_xmLxh:idx_xpLxh) - 1) * Mx + (idx_y0 - 1) * My;
 
 %% Calculate analytical solution for comparision
 
-[E_ana, H_ana] = IncidentPlaneWaveAnalytic(xmesh(idx_2_plot1), -1j * E, f, 1, 4, MAT);
+[E_ana, H_ana] = Analytic_Pol_y_Prop_x(xmesh(idx_2_plot1), E, f, 1, 4, MAT);
 
 
 %% Plot analytical solution and solutions in TD and FD
@@ -286,13 +275,13 @@ idx_2_plot2 = 1 + ((idx_xmLxh:idx_xpLxh) - 1) * Mx + (idx_y0 - 1) * My;
 % Plot electric field
 figure(2)
 subplot(2,1,1);
-plot(xmesh(idx_2_plot1), real(E_ana), xmesh(idx_2_plot1), real(ebow_freq(idx_2_plot2+2*np))/lz, xmesh(idx_2_plot1), ebow_old(idx_2_plot2+2*np)/lz);
+plot(xmesh(idx_2_plot1), real(E_ana), xmesh(idx_2_plot1), real(ebow_freq(idx_2_plot2+1*np))/le, xmesh(idx_2_plot1), ebow_old(idx_2_plot2+1*np)/le);
 legend({'Analytical', 'Numerical FD', 'Numerical TD'},'Location','southwest');
 title('Electric field in z-direction over x')
 
 % Plot magnetic field
 subplot(2,1,2);
-plot(xmesh(idx_2_plot1), -real(H_ana), xmesh(idx_2_plot1)-le/2,real(hbow_freq(idx_2_plot2+1*np))/le,xmesh(idx_2_plot1)-le/2,hbow_old(idx_2_plot2+1*np)/le);
+plot(xmesh(idx_2_plot1), real(H_ana), xmesh(idx_2_plot1) + [diff(xmesh(idx_2_plot1))/2, le/4], real(hbow_freq(idx_2_plot2+2*np))/lz, xmesh(idx_2_plot1) + [diff(xmesh(idx_2_plot1))/2, le/4], hbow_old(idx_2_plot2+2*np)/lz);
 legend({'Analytical', 'Numerical FD', 'Numerical TD'},'Location','southwest');
 title('Magnetic field in y-direction over x')
 drawnow
