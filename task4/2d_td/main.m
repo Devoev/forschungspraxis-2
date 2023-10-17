@@ -45,7 +45,7 @@ func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 polarization = 1;
 
 % Elements per wavelength
-elem_per_wavelength = 12;
+elem_per_wavelength = 6;
 
 % Offset in each direction in elements
 offset = [0,10,10,10];
@@ -220,7 +220,7 @@ for t = linspace(0,t_end,ceil(t_end/dt))
 
     % Sum up power through each surface for one period before the end
     if t >= t_end - 1/f1
-        S_ex1 = S_ex1 + CalcPowerSurfaceXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst, MAT.da);
+        S_ex1 = S_ex1 + CalcPoyntinvectorXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst);
         i_steps = i_steps + 1;
     end
 
@@ -241,7 +241,7 @@ for t = linspace(0,t_end,ceil(t_end/dt))
         ylim([0, h/2*1e-6])
         set(e_surf_plot,'LineStyle','none')
         view(2)
-        colormap hot;
+        %colormap hot;
         title('Absolute value of electric field','Interpreter','latex')
         xlabel('$x$ (m)','Interpreter','latex')
         ylabel('$y$ (m)','Interpreter','latex')
