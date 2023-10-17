@@ -13,8 +13,8 @@ function [e_pos, h_pos, s_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda1, lambd
 %   n - refraction index of the thin film
 %   daY - size of y surfaces in the model domain
 %OUTPUT:
-%   s_pos - analytic evaluations of poynting vec at all x positions times
-%           Y surface => FIELD INTENSITY at x_pos
+%   s_pos - analytic evaluations of poyntin vec in y direction 
+%           => FIELD INTENSITY at x_pos
 %                     a  
 %                   |---|     
 %   -->             * * *
@@ -89,7 +89,7 @@ for idx = 1:dim
         h_pos(idx) = H3_l1(x_val) + H3_l2(x_val);
     end
     % poynting vector in x direction:
-    s_pos(idx) = (1/2)*e_pos(idx)*conj(h_pos(idx))*daY;
+    s_pos(idx) = (1/2)*e_pos(idx)*conj(h_pos(idx));
 end
 
     %% Solving the plane wave LG

@@ -49,7 +49,7 @@ plot_analytic_ypol = 1;
 polarization = 2;
 
 % Elements per wavelength
-elem_per_wavelength = 10;
+elem_per_wavelength = 15;
 
 % Offset in each direction
 offset = [0,2,0,2];
@@ -91,7 +91,10 @@ points_y = num_e * h + 1;
 % Calculate xmesh with respect to the choosen offset
 x_offset1 = (-offset(4):-1) * le;
 x_offset2 = L * 1e-6 + (1:offset(2)) * le;
-x_basic = linspace(0, L * 1e-6, points_x);
+% refinement of factor 4 in thin film
+x_basic = [linspace(0, (L/2)*1e-6, num_e*(L/2)+1), ...
+    linspace((L/2)*1e-6 + le*0.25, (L/2+a)*1e-6 - le*0.25, 4*num_e*a-2), ...
+    linspace((L/2+a)*1e-6, L*1e-6, num_e*(L/2-a))];
 xmesh = [x_offset1, x_basic, x_offset2];
 
 % Calculate ymesh with respect to the choosen offset
@@ -194,7 +197,7 @@ material_regions.boxesMuiR = boxesMuiR;
 %% Set up parameters for the simulation in time domain for excitation 1 
 
 % Time step size
-dt = 4e-17;
+dt = 1e-17;
 
 % Fit dt to period of excitation 1
 dt = 1/f1 / ceil(1/f1 / dt);
@@ -248,7 +251,7 @@ for t = linspace(0,t_end,ceil(t_end/dt))
 
     % Sum up power through each surface for one period before the end
     if t >= t_end - 1/f1
-        S_ex1 = S_ex1 + CalcPowerSurfaceXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst, MAT.da);
+        S_ex1 = S_ex1 + CalcPoyntinvectorXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst);
         i_steps = i_steps + 1;
     end
 
@@ -312,7 +315,7 @@ if plot_intensity
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
     xlim([-h/2*1e-6, h/2*1e-6])
-    ylim([0, 2e-5])
+    %ylim([0, 2e-5])
     legend()
 
     % Calculate indices of the second screen at x = L
@@ -327,7 +330,7 @@ if plot_intensity
     xlabel('Position at the screen $y$ (m)','Interpreter','latex')
     ylabel('Intensity $I$','Interpreter','latex')
     xlim([-h/2*1e-6, h/2*1e-6])
-    ylim([0, 5e-5])
+    %ylim([0, 5e-5])
     legend()
 end
 
