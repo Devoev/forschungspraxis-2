@@ -47,11 +47,6 @@ lambda2 = 510e-9;   % [m]
 f2 = c/lambda2;     % [Hz]
 E2 = 500;           % [V/m]
 
-if test_farfield
-    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
-    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
-end
-
 % Problem size in wavelength        |   
 %               L3                  |      b: middle index
 %                y                  |         
@@ -68,6 +63,11 @@ d = 4e-6;       % slit distance
 delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
+
+if test_farfield
+    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
+    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
+end
 
 offset = [20, 20, 20, 20];                  % Total offset from boundaries
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
