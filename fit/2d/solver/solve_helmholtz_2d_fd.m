@@ -37,6 +37,9 @@ A = W' * (omega^2 * meps - c' * mmui * c) * W;
 rhs = W' * (1j * omega * jsbow - (omega^2 * meps - c' * mmui * c) * e_exi);
 
 % solve system of equation equation
+% tol = 1e-4;
+% maxit = 600;
+% e_DoF = gmres(A,rhs,[],tol,maxit);
 e_DoF = A\rhs;
 ebow = e_exi + W * e_DoF;
 

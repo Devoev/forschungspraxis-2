@@ -1,4 +1,4 @@
-%% Task3: Thin-film interference
+%% Task3: Thin-film - frequency domain
 
 clc
 clear all
@@ -69,7 +69,7 @@ bc.NPML = NPML;
 
 
 %% mesh
-elem_per_wavelength = 15;
+elem_per_wavelength = 20;
 dx = lambda1*(NPML(2) + NPML(4))/elem_per_wavelength;  % Extra space in +x direction
 xmesh = linspace(0, L + dx, ceil((L + dx)/lambda1*elem_per_wavelength));
 ymesh = linspace(-h/2, h/2, ceil( h/lambda1*elem_per_wavelength )); % No Extra space in y dir. (PEC)

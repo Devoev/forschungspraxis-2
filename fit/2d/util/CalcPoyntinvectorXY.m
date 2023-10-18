@@ -1,4 +1,4 @@
-function [S] = CalcPowerSurfaceXY(msh, ebow, hbow, ds, dst, da)
+function [S] = CalcPoyntinvectorXY(msh, ebow, hbow, ds, dst)
 % CalcPowerSurfaceXY calculates the power through each surface in x- and
 % y-direction utilizing the Poyntinvector. Applyable for time and frequency
 % domain.
@@ -9,7 +9,6 @@ function [S] = CalcPowerSurfaceXY(msh, ebow, hbow, ds, dst, da)
 %   hbow                - Vector with integrated magnetic field
 %   ds                  - Primary edge matrix
 %   dst                 - Dual edge matrix
-%   da                  - Primary surface matrix
 %
 % Outputs:
 %   S                   - Integrated Poyntinvector with entries for faces
@@ -171,7 +170,3 @@ S = [Sy; Sx; zeros(np,1)];
 if isreal(Sy) == false
     S = 1/2 *S;
 end
-
-% Multiply entries in S with length of corresponding surface in the
-% xy-plane
-S = da * S;

@@ -42,40 +42,47 @@ func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 %% Define important parameters for the simulation
 
 % Polarization: 1 for z and 2 for y
-polarization = 1;
+polarization = 2;
 
 % Elements per wavelength
-elem_per_wavelength = 6;
+elem_per_wavelength = 10;
 
-% Offset in each direction in elements
-offset = [0,10,10,10];
+% Offset in each direction in micro meter
+offset = [0,2,0,2];
 
 % Edit boundary conditions
-bc.bc = ["PMC", "OPEN", "OPEN", "OPEN"];
+if polarization == 1
+    bc.bc = ["PMC", "OPEN", "PMC", "OPEN"];
+elseif polarization == 2
+    bc.bc = ["PEC", "OPEN", "PEC", "OPEN"];
+end
 
 
 %% Edit basic calculation domain 
 
-% Distance in x-direction
+% Distance in x-direction in micro meter
 L = 10;
 
-% Screen height
-h = 40;
+% Screen height in micro meter
+h = 4;
 
-% Width of slit
-delta = 1;
+% Thcikness of thin film in micro meter
+a = 0.1;
 
 % Define maximal edge lenth in the mesh
 le = min(lambda_1,lambda_2)/elem_per_wavelength;
 
-% Fit edge length to be an integer divisor of 0.5 micro meter and calculate
+% Fit edge length to be an integer divisor of 0.1 micro meter and calculate
 % number of edges per micro meter
-num_e   = 2 * ceil(0.5e-6 / le);
+num_e   = 10 * ceil(0.1e-6 / le);
 le      = 1e-6 / num_e;
+
+% Calculate offset in micro meter
+offset = offset * num_e;
 
 % Calculate number of points in x- and y-direction
 points_x = num_e * L + 1;
-points_y = num_e * h/2 + 1;
+points_y = num_e * h + 1;
 
 % Calculate xmesh with respect to the choosen offset
 x_offset1 = (-offset(4):-1) * le;
@@ -84,9 +91,9 @@ x_basic = linspace(0, L * 1e-6, points_x);
 xmesh = [x_offset1, x_basic, x_offset2];
 
 % Calculate ymesh with respect to the choosen offset
-y_offset1 = (-offset(1):-1) * le;
+y_offset1 = -h/2 * 1e-6 + (-offset(1):-1) * le;
 y_offset2 = h/2 * 1e-6 + (1:offset(3)) * le;
-y_basic = linspace(0, h/2 * 1e-6, points_y);
+y_basic = linspace(-h/2 * 1e-6, h/2 * 1e-6, points_y);
 ymesh = [y_offset1, y_basic, y_offset2];
 
 % Create basic mesh object
@@ -103,17 +110,23 @@ np = msh.np;
 % Index of x = 0
 idx_x0      = find(xmesh == 0);
 
+% Index of x = L/2
+idx_xL_h    = find(xmesh == L/2 * 1e-6);
+
+% Index of x = L/2 + a
+idx_xL_h_a  = find(xmesh == (L/2 + a)* 1e-6);
+
 % Index of x = L
 idx_xL      = find(xmesh == L * 1e-6);
+
+% Index of y = -h/2
+idx_ymh_h   = find(ymesh == -h/2 * 1e-6);
 
 % Index of y = 0
 idx_y0      = find(ymesh == 0);
 
-% Index of y = delta/2
-idx_yd_h    = find(ymesh == delta/2 * 1e-6);
-
 % Index of y = h/2
-idx_h_h     = find(ymesh == h/2 * 1e-6);
+idx_yph_h   = find(ymesh == h/2 * 1e-6);
 
 
 %% Create the vectors describing the excitation
@@ -128,7 +141,7 @@ e_exitation = NaN(3*np, 1);
 if polarization == 1
 
     % Determine indices for points in the single slit
-    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_y0:idx_yd_h) - 1) * My;
+    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h) - 1) * My;
 
     % Use corresponding edges in z-direction for excitation
     e_exitation(n_exi + 2*np) = 1;
@@ -137,10 +150,10 @@ if polarization == 1
 elseif polarization == 2
 
     % Determine indices for points in the single slit
-    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_y0:idx_yd_h-1) - 1) * My;
+    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h-1) - 1) * My;
 
     % Use corresponding edges in y-direction for excitation
-    e_exitation(n_exi + 1*np) = 1; 
+    e_exitation(n_exi + 1*np) = le; 
 
 end
 
@@ -173,15 +186,15 @@ material_regions.boxesMuiR = boxesMuiR;
 %% Set up parameters for the simulation in time domain for excitation 1 
 
 % Time step size
-dt = 8e-17;
+dt = 5e-17;
 
 % Fit dt to period of excitation 1
 dt = 1/f1 / ceil(1/f1 / dt);
 
 % Calculate end time regarding the time needed for the calculation of the
 % on avarage emitted power
-t_end = sqrt((L * 1e-6)^2 + (h/2 * 1e-6)^2) / sqrt(material_regions.mu0i/material_regions.epsilon0);
-t_end = t_end + 3 * max(1/f1, 1/f2);
+t_end = L * 1e-6 / sqrt(material_regions.mu0i/material_regions.epsilon0);
+t_end = t_end + 2 * max(1/f1, 1/f2);
 
 
 %% Simulate in time domain for excitation 1 
@@ -199,6 +212,13 @@ MAT.mepsi = nullInv(MAT.meps);
 % Initialize calculation of avarage power
 S_ex1 = zeros(3*np,1);
 i_steps = 0;
+
+% Indices for plot of electric field
+if polarization == 1
+    idx_2_plot = 2*np+1:3*np;
+elseif polarization == 2
+    idx_2_plot = np+1:2*np;
+end
 
 % Calculate time steps
 steps_movie = 0;
@@ -220,7 +240,7 @@ for t = linspace(0,t_end,ceil(t_end/dt))
 
     % Sum up power through each surface for one period before the end
     if t >= t_end - 1/f1
-        S_ex1 = S_ex1 + CalcPoyntinvectorXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst);
+        S_ex1 = S_ex1 + CalcPowerSurfaceXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst, MAT.da);
         i_steps = i_steps + 1;
     end
 
@@ -232,7 +252,7 @@ for t = linspace(0,t_end,ceil(t_end/dt))
         steps_movie = 0;
 
         [X,Y] = meshgrid(xmesh, ymesh);
-        e_surf = reshape(ebow_new(2*np+1:3*np,1), [msh.nx, msh.ny]);
+        e_surf = reshape(ebow_new(idx_2_plot,1), [msh.nx, msh.ny]);
         
         figure(1)
         e_surf_plot = surf(X,Y,e_surf');
@@ -241,7 +261,7 @@ for t = linspace(0,t_end,ceil(t_end/dt))
         ylim([0, h/2*1e-6])
         set(e_surf_plot,'LineStyle','none')
         view(2)
-        %colormap hot;
+        colormap hot;
         title('Absolute value of electric field','Interpreter','latex')
         xlabel('$x$ (m)','Interpreter','latex')
         ylabel('$y$ (m)','Interpreter','latex')
@@ -259,23 +279,14 @@ S_ex1 = S_ex1/i_steps;
 %% Plot avarage power on screen for excitation 1
 
 % Calculate indices of the screen
-n_screen = 1 + (idx_xL - 1) * Mx + ((idx_y0:idx_h_h-1) - 1) * My;
+n_screen = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h-1) - 1) * My;
 
 % Calculate y-coordinates of corresponding faces as parts of the screen
-y_coord_screen = ymesh(idx_y0:idx_h_h-1) + le/2;
-
-% Get analytical solution to compare
-[I, bright, dark] = intensityCalcSignleSlit(max(S_ex1(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_1, y_coord_screen);
+y_coord_screen = ymesh(idx_ymh_h:idx_yph_h-1) + le/2;
 
 % Plot avarage power on screen over associated y-coordinates
 figure(2)
-plot(y_coord_screen, S_ex1(n_screen + np), y_coord_screen, I)
-hold on
-plot(y_coord_screen, I)
-hold on
-scatter(bright, zeros(max(size(bright)),1), "green", 'filled')
-hold on
-scatter(dark, zeros(max(size(dark)),1), "black", 'filled')
+plot(y_coord_screen, S_ex1(n_screen + np))
 
 
 
