@@ -173,7 +173,9 @@ end
 
 % Intensity calculation
 [I,y] = calc_intensity(msh, ebow_abs, offset);
-I = I/max(I);
+if max(I) ~= 0
+    I = I/max(I);
+end
 
 if plot_intensity
     figure
