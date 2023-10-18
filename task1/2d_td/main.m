@@ -70,11 +70,6 @@ bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 
 %% Generate Mesh
 
-% TD params
-dt = 8e-17;
-tend = 30/f1;
-nt = ceil(tend/dt);
-
 % Geo params
 elem_per_wavelength = 10;
 dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for offset
@@ -118,6 +113,11 @@ ebow_bc(idx_bc) = 1;
 [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]);
 MAT.mepsi = nullInv(MAT.meps);
 [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
+
+% TD params
+dt = CFL(msh, MAT)
+tend = 40/f1;
+nt = ceil(tend/dt);
 
 % Excitation
 ebow_exi = @(t) ebow_bc * (E1*cos(2*pi*f1*t) + E2*cos(2*pi*f2*t));
