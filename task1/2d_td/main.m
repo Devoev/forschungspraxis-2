@@ -23,7 +23,7 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
 use_y_symmetry = 1;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
-plot_field = 1;             % Plot the 2D electrical field
+plot_field = 0;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
 plot_intensity_colored = 0; % Plot the calculated intensities in the actual light colors
 plot_intensity_ana = 1;     % Plot the analytically calculated intensity on the screen
@@ -65,7 +65,7 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 
-offset = [0,0,0,0];                         % Total offset from boundaries  TODO: FIX offsets
+offset = [0,0,70,0];                         % Total offset from boundaries  TODO: FIX offsets
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 
 %% Generate Mesh
@@ -115,17 +115,17 @@ MAT.mepsi = nullInv(MAT.meps);
 [mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % TD params
-dt = CFL(msh, MAT)
-tend = 40/f1;
+dt = CFL(msh, MAT);
+tend = 30/f1;
 nt = ceil(tend/dt);
 
 % Excitation
 ebow_exi = @(t) ebow_bc * (E1*cos(2*pi*f1*t) + E2*cos(2*pi*f2*t));
 
 % Vectors
-ebow = sparse(3*msh.np, nt);
-hbow = sparse(3*msh.np, nt);
-ebow_abs = sparse(msh.np, nt);
+ebow = zeros(3*msh.np, nt);
+hbow = zeros(3*msh.np, nt);
+ebow_abs = zeros(msh.np, nt);
 
 % Solve
 for i = 1:nt
