@@ -84,8 +84,10 @@ sy_v = reshape(sy', [], 1);
 S = sparse(diag([sy_v./sx_v; sx_v./sy_v; sx_v.*sy_v]));
 
 Meps_s = S*Meps;
-Mmui_s = S*Mmui;
-    
+% multiply with actuall Mmu not Mmui
+Mmu_s = S*nullInv(Mmui);
+Mmui_s = nullInv(Mmu_s);     
+
 % calculate matching impedance for a certain pml layer --------------------
 function val = impedance(v, Lv, sigma_max, a_max, p, imp0)
 
