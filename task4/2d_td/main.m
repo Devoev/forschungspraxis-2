@@ -46,7 +46,7 @@ func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 polarization = 1;
 
 % Elements per wavelength
-elem_per_wavelength = 10;
+elem_per_wavelength = 8;
 
 % Offset in each direction in elements
 offset = [0,10,10,10];
@@ -266,19 +266,24 @@ n_screen = 1 + (idx_xL - 1) * Mx + ((idx_y0:idx_h_h-1) - 1) * My;
 y_coord_screen = ymesh(idx_y0:idx_h_h-1) + le/2;
 
 % Get analytical solution to compare
-[I, bright, dark] = intensityCalcSignleSlit(max(S_ex1(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_1, y_coord_screen);
+[I1_ana, bright, dark] = intensityCalcSignleSlit(max(S_ex1(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_1, y_coord_screen);
+
+% Vector with numerical calculated intensity
+I1_num = S_ex1(n_screen + np);
 
 % Plot avarage power on screen over associated y-coordinates
 figure(2)
-plot(y_coord_screen, S_ex1(n_screen + np), y_coord_screen, I)
-hold on
-scatter(bright, zeros(max(size(bright)),1), "green", 'filled')
-hold on
-scatter(dark, zeros(max(size(dark)),1), "black", 'filled')
-grid on
+plot(y_coord_screen, I1_num, 'Color', [.5 0 .5], LineWidth=1.5);
+hold on;
+plot(y_coord_screen, I1_ana, 'Color', [0 0 0], LineWidth=1.5, LineStyle='--');
+hold on;
+scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
+hold on;
+scatter(dark, zeros(max(size(dark)),1), "black", 'filled');
+grid on;
 xlabel('$y$ (m)','Interpreter','latex');
 ylabel('$Intensity$ (W/(m**2))','Interpreter','latex');
-legend({'Numerical TD', 'Analytical', 'Bright fringes', 'Dark fringes'},'Location','northeast');
+legend({'Numerical TD', 'Analytical', 'Loc bright fringes', 'Loc dark fringes'},'Location','northeast');
 title('Intensity on screen for electric field with 430nm wavelength');
 drawnow
 
@@ -373,23 +378,46 @@ n_screen = 1 + (idx_xL - 1) * Mx + ((idx_y0:idx_h_h-1) - 1) * My;
 y_coord_screen = ymesh(idx_y0:idx_h_h-1) + le/2;
 
 % Get analytical solution to compare
-[I, bright, dark] = intensityCalcSignleSlit(max(S_ex2(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_2, y_coord_screen);
+[I2_ana, bright, dark] = intensityCalcSignleSlit(max(S_ex2(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_2, y_coord_screen);
+
+% Vector with numerically calculated intensity
+I2_num = S_ex2(n_screen + np);
 
 % Plot avarage power on screen over associated y-coordinates
 figure(4)
-plot(y_coord_screen, S_ex2(n_screen + np), y_coord_screen, I)
-hold on
-scatter(bright, zeros(max(size(bright)),1), "green", 'filled')
-hold on
-scatter(dark, zeros(max(size(dark)),1), "black", 'filled')
-grid on
+plot(y_coord_screen, I2_num, 'Color', [0 1 1], LineWidth=1.5);
+hold on;
+plot(y_coord_screen, I2_ana, 'Color', [0 0 0], LineWidth=1.5, LineStyle='--');
+scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
+hold on;
+scatter(dark, zeros(max(size(dark)),1), "black", 'filled');
+grid on;
 xlabel('$y$ (m)','Interpreter','latex');
 ylabel('$Intensity$ (W/(m**2))','Interpreter','latex');
-legend({'Numerical TD', 'Analytical', 'Bright fringes', 'Dark fringes'},'Location','northeast');
+legend({'Numerical', 'Analytical', 'Loc bright fringes', 'Loc dark fringes'},'Location','northeast');
 title('Intensity on screen for electric field with 510nm wavelength');
 drawnow
 
 
+%% Calculate errors of the solutions for both wavelengths
+error_I1 = norm(I1_num - I1_ana') / norm(I1_ana);
+error_I2 = norm(I2_num - I2_ana') / norm(I2_ana);
+
+disp(['Relative error of intensity for wavelength 430nm: ', num2str(error_I1)]);
+disp(['Relative error of intensity for wavelength 510nm: ', num2str(error_I2)]);
 
 
-
+%% Plot the intensity of both wavelengths together
+I_combine = I1_num + I2_num;
+figure(5)
+plot(y_coord_screen, I1_num, 'Color', [.5 0 .5], 'LineWidth', 2);
+hold on;
+plot(y_coord_screen, I2_num, 'Color', [0 1 1], 'LineWidth', 2);
+hold on;
+plot(y_coord_screen, I_combine, 'Color', [0 0 0], 'LineStyle','--', LineWidth=1.5);
+grid on;
+xlabel('$y$ (m)','Interpreter','latex');
+ylabel('$Intensity$ (W/(m**2))','Interpreter','latex');
+legend({'Wave 430nm', 'Wave 510nm', 'Combined intensity'},'Location','northeast');
+title('Combinded intensity of both light waves (430nm and 510nm)');
+drawnow

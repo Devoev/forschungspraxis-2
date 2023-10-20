@@ -14,6 +14,7 @@ function [I, bright, dark] = intensityCalcSignleSlit(Imax, d, l, lambda, y)
     dark = tan(asin((1:m)*lambda/d))*l;
     
     % Calculate y-values of bright fringes
-    bright = dark(1:end-1) + diff(dark)*1/2;
+    is_max = find(islocalmax(I));
+    bright = y([1, is_max]);
 
 end
