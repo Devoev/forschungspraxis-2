@@ -21,6 +21,20 @@ path_util_func = append(parent, '\fit\2d\util');
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 
+%% PART 1: General settings
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% What to do
+
+simulate_single_slit = false;
+simulate_double_slit = true;
+
+
 %% Define excitation
 
 % Add basic constants to material_regions object
@@ -40,13 +54,26 @@ E2          = 500;
 func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 
 
-%% Define important parameters for the simulation
+%% Define important parameters for all simulations
 
 % Polarization: 1 for z and 2 for y
 polarization = 1;
 
 % Elements per wavelength
 elem_per_wavelength = 8;
+
+
+%% PART 2: Single Slit
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if simulate_single_slit
+
+
+%% Define important parameters for the simulation
 
 % Offset in each direction in elements
 offset = [0,10,10,10];
@@ -420,4 +447,389 @@ xlabel('$y$ (m)','Interpreter','latex');
 ylabel('$Intensity$ (W/(m**2))','Interpreter','latex');
 legend({'Wave 430nm', 'Wave 510nm', 'Combined intensity'},'Location','northeast');
 title('Combinded intensity of both light waves (430nm and 510nm)');
+drawnow
+
+
+end
+
+
+%% PART 2: Single Slit
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Clear old variables
+clear MAT  material_regions offset bc;
+
+
+%% Define important parameters for the simulation
+
+% Offset in each direction in elements
+offset = [10,10,10,10];
+
+% Edit boundary conditions
+bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];
+
+
+%% Edit basic calculation domain 
+
+% Distance in x-direction in micro meters
+L = 10;
+
+% Screen height in micro meters
+h = 40;
+
+% Width of slit in micro meters
+delta = 1;
+
+% Distance between the slits in micro meters
+dist = 4;
+
+% Define maximal edge lenth in the mesh
+le = min(lambda_1,lambda_2)/elem_per_wavelength;
+
+% Fit edge length to be an integer divisor of 0.5 micro meter and calculate
+% number of edges per micro meter
+num_e   = 2 * ceil(0.5e-6 / le);
+le      = 1e-6 / num_e;
+
+% Calculate number of points in x- and y-direction
+points_x = num_e * L + 1;
+points_y = num_e * h + 1;
+
+% Calculate xmesh with respect to the choosen offset
+x_offset1 = (-offset(4):-1) * le;
+x_offset2 = L * 1e-6 + (1:offset(2)) * le;
+x_basic = linspace(0, L * 1e-6, points_x);
+xmesh = [x_offset1, x_basic, x_offset2];
+
+% Calculate ymesh with respect to the choosen offset
+y_offset1 = -h/2 * 1e-6 + (-offset(1):-1) * le;
+y_offset2 = h/2 * 1e-6 + (1:offset(3)) * le;
+y_basic = linspace(-h/2 * 1e-6, h/2 * 1e-6, points_y);
+ymesh = [y_offset1, y_basic, y_offset2];
+
+% Create basic mesh object
+msh = cartMesh_2D(xmesh, ymesh); 
+Mx = msh.Mx;
+My = msh.My;
+nx = msh.nx;
+ny = msh.ny;
+np = msh.np;
+lz = msh.lz;
+
+
+%% Find important indices in xmesh and ymesh
+
+% Index of x = 0
+idx_x0      = find(xmesh == 0);
+
+% Index of x = L
+idx_xL      = find(xmesh == L * 1e-6);
+
+% Index of y = 0
+idx_y0      = find(ymesh == 0);
+
+% Index of y = -dist/2 
+idx_ymdisth = find(ymesh == -dist/2 * 1e-6);
+
+% Index of y = dist/2 
+idx_ypdisth = find(ymesh == dist/2 * 1e-6);
+
+% Index of y = -dist/2 - delta
+idx_ymdd    = find(ymesh == -dist/2 * 1e-6 - delta * 1e-6);
+
+% Index of y = dist/2 + delta
+idx_ypdd    = find(ymesh == dist/2 * 1e-6 + delta * 1e-6);
+
+% Index of y = -h/2
+idx_y_mhh   = find(ymesh == -h/2 * 1e-6);
+
+% Index of y = h/2
+idx_y_phh   = find(ymesh == h/2 * 1e-6);
+
+
+%% Create the vectors describing the excitation
+
+% Create empty jsbow_space vector
+jsbow_excitation = NaN(3*np, 1);
+
+% Create excitation vector for the electric field
+e_exitation = NaN(3*np, 1);
+
+% Generate excitation for polarization in z-direction
+if polarization == 1
+
+    % Determine indices for points in the double slit
+    n_exi1 = 1 + (idx_x0 - 1) * Mx + ((idx_ymdd:idx_ymdisth) - 1) * My;
+    n_exi2 = 1 + (idx_x0 - 1) * Mx + ((idx_ypdisth:idx_ypdd) - 1) * My;
+
+    % Use corresponding edges in z-direction for excitation
+    e_exitation([n_exi1, n_exi2] + 2*np) = lz;
+
+% Generate excitation for polarization in y-direction
+elseif polarization == 2
+
+    % Determine indices for points in the double slit
+    n_exi1 = 1 + (idx_x0 - 1) * Mx + ((idx_ymdd:idx_ymdisth-1) - 1) * My;
+    n_exi2 = 1 + (idx_x0 - 1) * Mx + ((idx_ypdisth:idx_ypdd-1) - 1) * My;
+
+    % Use corresponding edges in y-direction for excitation
+    e_exitation([n_exi1, n_exi2] + 1*np) = le; 
+
+end
+
+
+%% Edit material regions
+
+% Add basic constants to material_regions object
+material_regions.epsilon0 = 8.854187e-12;
+material_regions.mu0i = 1/(pi*4e-7);
+
+% Regions for relative permittivity
+% Relative permittivity everywhere equal to one
+boxesEpsilonR(1).box = [1, nx, 1, ny];
+boxesEpsilonR(1).value = 1;
+material_regions.boxesEpsilonR = boxesEpsilonR;
+
+% Regions for inverse relative permeability
+% Inverse relative permeability everywhere equal to one
+boxesMuiR(1).box = [1, nx, 1, ny];
+boxesMuiR(1).value = 1;
+material_regions.boxesMuiR = boxesMuiR;
+
+
+%% Apply boundary conditions and get excitation vectors for the simulation
+
+[bc, W, e_exi, jsbow] = apply_bc(msh, bc, e_exitation, jsbow_excitation);
+
+
+%% Generate matrices for calculation
+
+[MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); %#ok<NBRAK2> 
+
+
+%% Set up parameters for the simulation in time domain for excitation 1
+
+% Time step size
+dt = CFL(msh, MAT);
+
+% Fit dt to period of excitation 1
+dt = 1/f1 / ceil(1/f1 / dt);
+
+% Calculate end time regarding the time needed for the calculation of the
+% on avarage emitted power
+t_end = sqrt((L * 1e-6)^2 + (h/2 * 1e-6)^2) / sqrt(material_regions.mu0i/material_regions.epsilon0);
+t_end = t_end + 3/f1;
+
+
+%% Simulate in time domain for excitation 1 
+
+% Initialize open boundary condition if needed
+[mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
+
+% Initialize ebow and hbow
+ebow_new = zeros(3*np,1);
+hbow_new = zeros(3*np,1);
+
+% Add inverse permittivity matrix
+MAT.mepsi = nullInv(MAT.meps);
+
+% Initialize calculation of avarage power
+S_ex1d = zeros(3*np,1);
+i_steps = 0;
+
+% Calculate time steps
+for t = 0:dt:t_end
+
+    % Old values
+    ebow_old = ebow_new;
+    hbow_old = hbow_new;
+
+    % Calculate value for excitation
+    e_exi_old = e_exi * func_exi_1(t);
+    e_exi_new = e_exi * func_exi_1(t+1);
+
+    % Execute timestep with leapfrog
+    [ebow_new,hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
+
+    % Apply open boundary with mur condition
+    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
+
+    % Sum up power through each surface for one period before the end
+    if t >= t_end - 1/f1
+        S_ex1d = S_ex1d + CalcPoyntinvectorXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst);
+        i_steps = i_steps + 1;
+    end
+
+end
+
+% Get time avarage of the power through each surface
+S_ex1d = S_ex1d/i_steps;
+
+
+%% Plot electric field over domain for excitation 1
+
+figure(6)
+[X,Y] = meshgrid(xmesh, ymesh);
+if polarization == 1
+    e_surf = reshape(ebow_new(2*np+1:3*np,1)/lz, [msh.nx, msh.ny]);
+elseif polarization == 2
+    e_surf = reshape(ebow_new(np+1:2*np,1)/le, [msh.nx, msh.ny]);
+end
+e_surf_plot = surf(X,Y,e_surf');
+xlim([0, L*1e-6])
+ylim([-h/2*1e-6, h/2*1e-6])
+set(e_surf_plot,'LineStyle','none')
+view(2)
+colormap winter;
+title('Propagation of electric field (430nm)','Interpreter','latex')
+xlabel('$x$ (m)','Interpreter','latex')
+ylabel('$y$ (m)','Interpreter','latex')
+zlabel('Electric field in V/m','Interpreter','latex')
+drawnow
+
+
+%% Plot avarage power on screen for excitation 1
+
+% Calculate indices of the screen
+n_screen = 1 + (idx_xL - 1) * Mx + ((idx_y_mhh:idx_y_phh-1) - 1) * My;
+
+% Calculate y-coordinates of corresponding faces as parts of the screen
+y_coord_screen = ymesh(idx_y_mhh:idx_y_phh-1) + le/2;
+
+% Get analytical solution to compare
+[I1d_ana, bright, dark] = intensityCalcSignleSlit(max(S_ex1d(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_1, y_coord_screen);
+
+% Vector with numerical calculated intensity
+I1d_num = S_ex1d(n_screen + np);
+
+% Plot avarage power on screen over associated y-coordinates
+figure(7)
+plot(y_coord_screen, I1d_num, 'Color', [.5 0 .5], LineWidth=1.5);
+hold on;
+plot(y_coord_screen, I1d_ana, 'Color', [0 0 0], LineWidth=1.5, LineStyle='--');
+hold on;
+scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
+hold on;
+scatter(dark, zeros(max(size(dark)),1), "black", 'filled');
+grid on;
+xlabel('$y$ (m)','Interpreter','latex');
+ylabel('$Intensity$ (W/(m**2))','Interpreter','latex');
+legend({'Numerical', 'Analytical', 'Loc bright fringes', 'Loc dark fringes'},'Location','northeast');
+title('Intensity on screen for electric field with 430nm wavelength');
+drawnow
+
+
+%% Set up parameters for the simulation in time domain for excitation 2 
+
+% Time step size
+dt = CFL(msh, MAT);
+
+% Fit dt to period of excitation 2
+dt = 1/f2 / ceil(1/f2 / dt);
+
+% Calculate end time regarding the time needed for the calculation of the
+% on avarage emitted power
+t_end = sqrt((L * 1e-6)^2 + (h/2 * 1e-6)^2) / sqrt(material_regions.mu0i/material_regions.epsilon0);
+t_end = t_end + 3/f2;
+
+
+%% Simulate in time domain for excitation 2 
+
+% Initialize open boundary condition if needed
+[mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
+
+% Initialize ebow and hbow
+ebow_new = zeros(3*np,1);
+hbow_new = zeros(3*np,1);
+
+% Add inverse permittivity matrix
+MAT.mepsi = nullInv(MAT.meps);
+
+% Initialize calculation of avarage power
+S_ex2 = zeros(3*np,1);
+i_steps = 0;
+
+% Calculate time steps
+for t = 0:dt:t_end
+
+    % Old values
+    ebow_old = ebow_new;
+    hbow_old = hbow_new;
+
+    % Calculate value for excitation
+    e_exi_old = e_exi * func_exi_2(t);
+    e_exi_new = e_exi * func_exi_2(t+1);
+
+    % Execute timestep with leapfrog
+    [ebow_new,hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
+
+    % Apply open boundary with mur condition
+    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
+
+    % Sum up power through each surface for one period before the end
+    if t >= t_end - 1/f2
+        S_ex2 = S_ex2 + CalcPoyntinvectorXY(msh, ebow_new, hbow_new, MAT.ds, MAT.dst);
+        i_steps = i_steps + 1;
+    end
+
+end
+
+% Get time avarage of the power through each surface
+S_ex2 = S_ex2/i_steps;
+
+
+%% Plot electric field over domain for excitation 2
+
+figure(3)
+[X,Y] = meshgrid(xmesh, ymesh);
+if polarization == 1
+    e_surf = reshape(ebow_new(2*np+1:3*np,1)/lz, [msh.nx, msh.ny]);
+elseif polarization == 2
+    e_surf = reshape(ebow_new(np+1:2*np,1)/le, [msh.nx, msh.ny]);
+end
+e_surf_plot = surf(X,Y,e_surf');
+xlim([0, L*1e-6])
+ylim([0, h/2*1e-6])
+set(e_surf_plot,'LineStyle','none')
+view(2)
+colormap winter;
+title('Value of electric field in z-direction (510nm)','Interpreter','latex')
+xlabel('$x$ (m)','Interpreter','latex')
+ylabel('$y$ (m)','Interpreter','latex')
+zlabel('Electric field in V/m','Interpreter','latex')
+drawnow
+
+
+%% Plot avarage power on screen for excitation 2
+
+% Calculate indices of the screen
+n_screen = 1 + (idx_xL - 1) * Mx + ((idx_y0:idx_h_h-1) - 1) * My;
+
+% Calculate y-coordinates of corresponding faces as parts of the screen
+y_coord_screen = ymesh(idx_y0:idx_h_h-1) + le/2;
+
+% Get analytical solution to compare
+[I2_ana, bright, dark] = intensityCalcSignleSlit(max(S_ex2(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_2, y_coord_screen);
+
+% Vector with numerically calculated intensity
+I2_num = S_ex2(n_screen + np);
+
+% Plot avarage power on screen over associated y-coordinates
+figure(4)
+plot(y_coord_screen, I2_num, 'Color', [0 1 1], LineWidth=1.5);
+hold on;
+plot(y_coord_screen, I2_ana, 'Color', [0 0 0], LineWidth=1.5, LineStyle='--');
+scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
+hold on;
+scatter(dark, zeros(max(size(dark)),1), "black", 'filled');
+grid on;
+xlabel('$y$ (m)','Interpreter','latex');
+ylabel('$Intensity$ (W/(m**2))','Interpreter','latex');
+legend({'Numerical', 'Analytical', 'Loc bright fringes', 'Loc dark fringes'},'Location','northeast');
+title('Intensity on screen for electric field with 510nm wavelength');
 drawnow
