@@ -3,6 +3,7 @@
 % Clear variables
 clc
 clear
+close all
 
 % Get parent directory
 filePath = matlab.desktop.editor.getActiveFilename;
@@ -20,6 +21,7 @@ path_verifications = append(parent, '\task3\verifications');
 % Add paths
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verifications)
 
+
 %% Define excitation
 
 % Add basic constants to material_regions object
@@ -30,11 +32,13 @@ material_regions.mu0i = 1/(pi*4e-7);
 lambda_1    = 430e-9;
 f1          = sqrt(material_regions.mu0i/material_regions.epsilon0)/lambda_1;           
 E1          = 250;
+func_exi_1  = @(t)(E1 * sin(2*pi*f1*t));
+
 % Excitation 2
 lambda_2    = 510e-9;
 f2          = sqrt(material_regions.mu0i/material_regions.epsilon0)/lambda_2;           
 E2          = 500;
-func_exi_1  = @(t)(E1 * sin(2*pi*f1*t)+ E2 * sin(2*pi*f2*t));
+func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 
 
 %% Define important parameters for the simulation
@@ -49,10 +53,10 @@ plot_analytic_ypol = 1;
 polarization = 2;
 
 % Elements per wavelength
-elem_per_wavelength = 15;
+elem_per_wavelength = 20;
 
 % Offset in each direction
-offset = [0,2,0,2];
+offset = [0,3*elem_per_wavelength,0,4*elem_per_wavelength];
 
 % Edit boundary conditions
 if polarization == 1
@@ -110,9 +114,13 @@ My = msh.My;
 nx = msh.nx;
 ny = msh.ny;
 np = msh.np;
+lz = msh.lz;
 
 
 %% Find important indices in xmesh and ymesh
+
+% Index in x-direction for excitation (inside the offset!!!!)
+idx_exi     = 5;
 
 % Index of x = 0
 idx_x0      = find(xmesh == 0);
@@ -148,16 +156,16 @@ e_exitation = NaN(3*np, 1);
 if polarization == 1
 
     % Determine indices for points in the single slit
-    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h) - 1) * My;
+    n_exi = 1 + (idx_exi - 1) * Mx + ((idx_ymh_h:idx_yph_h) - 1) * My;
 
     % Use corresponding edges in z-direction for excitation
-    e_exitation(n_exi + 2*np) = 1;
+    e_exitation(n_exi + 2*np) = lz;
 
 % Generate excitation for polarization in y-direction
 elseif polarization == 2
 
     % Determine indices for points in the single slit
-    n_exi = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h-1) - 1) * My;
+    n_exi = 1 + (idx_exi - 1) * Mx + ((idx_ymh_h:idx_yph_h-1) - 1) * My;
 
     % Use corresponding edges in y-direction for excitation
     e_exitation(n_exi + 1*np) = le; 
@@ -197,15 +205,14 @@ material_regions.boxesMuiR = boxesMuiR;
 %% Set up parameters for the simulation in time domain for excitation 1 
 
 % Time step size
-dt = 1e-17;
+dt = CFL(msh, MAT);
 
 % Fit dt to period of excitation 1
 dt = 1/f1 / ceil(1/f1 / dt);
 
 % Calculate end time regarding the time needed for the calculation of the
 % on avarage emitted power
-t_end = L * 1e-6 / sqrt(material_regions.mu0i/material_regions.epsilon0);
-t_end = t_end + 2 * max(1/f1, 1/f2);
+t_end = (30+0.7)/f1;
 
 
 %% Simulate in time domain for excitation 1 
@@ -287,68 +294,60 @@ end
 S_ex1 = S_ex1/i_steps;
 
 
+%% Calculate analytical solution for the intensity for excitation 1
+[S1, S3] = AnaSolPoyntin(E1, f1, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
+
+
 %% Plot avarage power on x=0 and x=L screen for excitation 1
 
-if plot_intensity
+% Calculate indices of screen at x = 0
+n_screen_0 = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h-1)-1) * My;
+% Calculate y-coordinates of corresponding faces as parts of the screen
+y_coord_screen = msh.ymesh(idx_ymh_h:idx_yph_h-1) + le/2;
+% Plot avarage power on screen over associated y-coordinates
+figure(2)
+plot(y_coord_screen, S_ex1(n_screen_0 + msh.np),'DisplayName', 'Numerical', 'color', '#1e8080')
+hold on
+plot(y_coord_screen, ones(1, length(y_coord_screen))*real(S1), 'DisplayName', 'analytic', 'color', 'red')
+hold on
+title('Intensity at the screen at $x=0$m','Interpreter','latex')
+xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+ylabel('Intensity $I$','Interpreter','latex')
+xlim([-h/2*1e-6, h/2*1e-6])
+%ylim([0, 2e-5])
+legend()
 
-    % solve analytic
-    if polarization == 2
-        % y-polarization solution at x=0 and x=L
-        x_pos = [idx_x0, idx_xL]; 
-        [~,~,analytic] = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L*1e-6/2, a*1e-6, 2, le^2);
-    else
-        % ToDo z-polarization analytic = 0 (?)
-        analytic = [0, 0];
-    end
+% Calculate indices of the second screen at x = L
+n_screen_L = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h-1)-1) * My;
+% Plot avarage power on screen x=L over associated y-coordinates
+figure(3)
+plot(y_coord_screen, S_ex1(n_screen_L + msh.np), 'DisplayName', 'Numerical', 'color', '#1e8080')
+hold on
+plot(y_coord_screen, ones(1,length(y_coord_screen))*real(S3), 'DisplayName', 'analytic', 'color', 'red')
+hold on
+title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
+xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+ylabel('Intensity $I$','Interpreter','latex')
+xlim([-h/2*1e-6, h/2*1e-6])
+%ylim([0, 5e-5])
+legend()
 
-    % Calculate indices of screen at x = 0
-    n_screen_0 = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h)-1) * My;
-    % Calculate y-coordinates of corresponding faces as parts of the screen
-    y_coord_screen = msh.ymesh + le/2;
-    % Plot avarage power on screen over associated y-coordinates
-    figure(2)
-    plot(y_coord_screen, S_ex1(n_screen_0 + msh.np),'DisplayName', 'Numerical', 'color', '#1e8080')
-    hold on
-    plot(y_coord_screen, ones(1, length(y_coord_screen))*analytic(1), 'DisplayName', 'analytic', 'color', 'red')
-    hold on
-    title('Intensity at the screen at $x=0$m','Interpreter','latex')
-    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-    ylabel('Intensity $I$','Interpreter','latex')
-    xlim([-h/2*1e-6, h/2*1e-6])
-    %ylim([0, 2e-5])
-    legend()
 
-    % Calculate indices of the second screen at x = L
-    n_screen_L = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h)-1) * My;
-    % Plot avarage power on screen x=L over associated y-coordinates
-    figure(3)
-    plot(y_coord_screen, S_ex1(n_screen_L + msh.np), 'DisplayName', 'Numerical', 'color', '#1e8080')
-    hold on
-    plot(y_coord_screen, ones(1,length(y_coord_screen))*analytic(2), 'DisplayName', 'analytic', 'color', 'red')
-    hold on
-    title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
-    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-    ylabel('Intensity $I$','Interpreter','latex')
-    xlim([-h/2*1e-6, h/2*1e-6])
-    %ylim([0, 5e-5])
-    legend()
-end
 
-if plot_analytic_ypol
-    % Calculate analytic intensity across whole domain
-    x_pos = msh.xmesh;
-    [e_pos, h_pos, s_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L*1e-6/2, a*1e-6, 2, le^2);
-    % Plot avarage power on screen x=L over associated y-coordinates
-    figure(4)
-    plot(x_pos, e_pos./max(e_pos), 'DisplayName', 'electric field', 'color', '#1e8080')
-    hold on
-    plot(x_pos, s_pos./max(s_pos), 'DisplayName', 'intensity', 'color', 'red')
-    hold on
-    title('normalized analytic solutions across whole domain','Interpreter','latex')
-    xlabel('Position in the domain $x$ (m)','Interpreter','latex')
-    ylabel('Intensity $I$','Interpreter','latex')
-    legend()
-end
+% Calculate analytic intensity across whole domain
+x_pos = msh.xmesh;
+[e_pos, h_pos, s_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L*1e-6/2, a*1e-6, 2, le^2);
+% Plot avarage power on screen x=L over associated y-coordinates
+figure(4)
+plot(x_pos, e_pos./max(e_pos), 'DisplayName', 'electric field', 'color', '#1e8080')
+hold on
+plot(x_pos, s_pos./max(s_pos), 'DisplayName', 'intensity', 'color', 'red')
+hold on
+title('normalized analytic solutions across whole domain','Interpreter','latex')
+xlabel('Position in the domain $x$ (m)','Interpreter','latex')
+ylabel('Intensity $I$','Interpreter','latex')
+legend()
+
 
 figure(5)
 s_surf = reshape(S_ex1(idx_2_plot,1), [msh.nx, msh.ny]);
@@ -357,5 +356,5 @@ title('numeric calculated intensity','Interpreter','latex')
 %xlim([0, L*1e-6])
 %ylim([0, h/2*1e-6])
 set(s_surf_plot,'LineStyle','none')
-colormap hot;
+colormap winter;
 
