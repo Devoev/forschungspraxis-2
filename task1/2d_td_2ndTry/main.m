@@ -46,10 +46,10 @@ func_exi_1  = @(t)(E1 * sin(2*pi*f1*t));
 polarization = 1;
 
 % Elements per wavelength
-elem_per_wavelength = 8;
+elem_per_wavelength = 12;
 
 % Offset in each direction in elements
-offset = [100,20,100,20];
+offset = [120,10,120,10];
 
 % Edit boundary conditions
 if polarization == 1
@@ -125,19 +125,19 @@ idx_y0      = find(ymesh == -h/2 * 1e-6);
 
 % Index of y slit1 start
 %idx_yd_h1    = find(ymesh == ((d-delta)/2 * 1e-6));
-idx_yd_h1 = round(((d-delta)/2 * 1e-6) / le +1 + ceil(0.5*length(ymesh)));
+idx_yd_h1 = round(((d-delta)/2 * 1e-6) / le + ceil(0.5*length(ymesh)));
 
 % Index of y slit1 end
 %idx_yd_h2    = find(ymesh == ((d+delta)/2 * 1e-6));
-idx_yd_h2 = round(((d+delta)/2 * 1e-6) / le +1 + ceil(0.5*length(ymesh)));
+idx_yd_h2 = round(((d+delta)/2 * 1e-6) / le + ceil(0.5*length(ymesh)));
 
 % Index of y slit2 start
 %idx_yd_h1    = find(ymesh == ((d-delta)/2 * 1e-6));
-idx_yd_h3 = round(((-d-delta)/2 * 1e-6) / le +1 + ceil(0.5*length(ymesh)));
+idx_yd_h3 = round(((-d-delta)/2 * 1e-6) / le + ceil(0.5*length(ymesh)));
 
 % Index of y slit2 end
 %idx_yd_h2    = find(ymesh == ((d+delta)/2 * 1e-6));
-idx_yd_h4 = round(((-d+delta)/2 * 1e-6) / le +1 + ceil(0.5*length(ymesh)));
+idx_yd_h4 = round(((-d+delta)/2 * 1e-6) / le + ceil(0.5*length(ymesh)));
 
 % Index of y = h/2
 % idx_h_h     = find(ymesh == h/2 * 1e-6);
@@ -295,12 +295,22 @@ y_coord_screen = ymesh(idx_y0:idx_h_h-1) + le/2;
 
 % Get analytical solution to compare
 %[I, bright, dark] = intensityCalcSignleSlit(max(S_ex1(n_screen + np)), delta * 1e-6, L * 1e-6, lambda_1, y_coord_screen);
-I1_farfield = intensity_farfield(E1, lambda_1, d, delta, L, y_coord_screen);
-I1_helmholtz = intensity_helmholtz(E1, lambda_1, d, delta, L, y_coord_screen, length(n_exi_1));
+I1_farfield = intensity_farfield(E1, lambda_1, d*1e-6, delta*1e-6, L*1e-6, y_coord_screen);
+I1_helmholtz = intensity_helmholtz(E1, lambda_1, d*1e-6, delta*1e-6, L*1e-6, y_coord_screen, length(n_exi_1));
 I1_farfield = I1_farfield / max(I1_farfield);
+I1_helmholtz = I1_helmholtz / max(I1_helmholtz);
 I_plot = S_ex1(n_screen + np);
 I_plot = I_plot / max(I_plot);
 % Plot avarage power on screen over associated y-coordinates
+
+% Error calculation
+I_err = norm(I_plot - I1_farfield.')/norm(I1_farfield);
+I_err_helmholtz = norm(I_plot - I1_helmholtz.')/norm(I1_helmholtz);
+
+fprintf('Relative L2 error between numerical and farfield solution = %f%% \n', 100*I_err)
+fprintf('Relative L2 error between numerical and Helmholtz solution = %f%%', 100*I_err_helmholtz)
+
+
 figure(2)
 plot(y_coord_screen, I_plot, y_coord_screen, I1_farfield, y_coord_screen, I1_helmholtz)
 hold on
@@ -312,9 +322,11 @@ hold on
 grid on
 xlabel('$y$ (m)','Interpreter','latex');
 ylabel('$Intensity$ (W/(m**2))','Interpreter','latex');
-legend({'Numerical TD', 'Analytical (farfield)', 'Analytical (Helmholtz)', 'Bright fringes', 'Dark fringes'},'Location','northeast');
+legend({'Numerical TD', 'Analytical (farfield)', 'Analytical (Helmholtz)', 'error'},'Location','northeast');
 title('Intensity on screen for electric field with 430nm wavelength');
 drawnow
+
+
 
 
 
