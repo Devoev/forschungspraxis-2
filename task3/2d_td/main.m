@@ -43,20 +43,14 @@ func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 
 %% Define important parameters for the simulation
 
-% intnsity plots ?
-plot_intensity = 1;
-
-% plot analytic ?
-plot_analytic_ypol = 1;
-
 % Polarization: 1 for z and 2 for y
 polarization = 2;
 
 % Elements per wavelength
-elem_per_wavelength = 20;
+elem_per_wavelength = 15;
 
 % Offset in each direction
-offset = [0,3*elem_per_wavelength,0,4*elem_per_wavelength];
+offset = [0,3*elem_per_wavelength,0,6*elem_per_wavelength];
 
 % Edit boundary conditions
 if polarization == 1
@@ -116,14 +110,13 @@ ny = msh.ny;
 np = msh.np;
 lz = msh.lz;
 
-
 %% Find important indices in xmesh and ymesh
-
-% Index in x-direction for excitation (inside the offset!!!!)
-idx_exi     = 5;
 
 % Index of x = 0
 idx_x0      = find(xmesh == 0);
+
+% Index in x-direction for excitation (inside the offset!!!!)
+idx_exi     = idx_x0-(offset(4)/2);
 
 % Index of x = L/2
 idx_xL_h    = find(xmesh == L/2 * 1e-6);
@@ -200,6 +193,10 @@ material_regions.boxesMuiR = boxesMuiR;
 %% Generate matrices for calculation
 
 [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); %#ok<NBRAK2> 
+
+% calc reflection arrival at x=0
+c0 = sqrt(MAT.mu0i/MAT.epsilon0);
+%t_end = (offset(4)*le/2 + L*1e-6)/c0 * 1.05
 
 
 %% Set up parameters for the simulation in time domain for excitation 1 
@@ -298,63 +295,58 @@ S_ex1 = S_ex1/i_steps;
 [S1, S3] = AnaSolPoyntin(E1, f1, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
 
 
-%% Plot avarage power on x=0 and x=L screen for excitation 1
-
-% Calculate indices of screen at x = 0
-n_screen_0 = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h-1)-1) * My;
+%% Plot avarage power on x=0 and x=L screen
+%if polarization == 2
+% Calculate indices of screen at x = 0 (y-surfaces)
+n_screen_0 = 1 + (idx_x0 - 1) * Mx + ((idx_ymh_h:idx_yph_h-1)-1) * My + msh.np;
 % Calculate y-coordinates of corresponding faces as parts of the screen
 y_coord_screen = msh.ymesh(idx_ymh_h:idx_yph_h-1) + le/2;
+% calculate relative error
+error_x0 = abs(mean(S_ex1(n_screen_0))-real(S1))/real(S1)*100;
 % Plot avarage power on screen over associated y-coordinates
 figure(2)
-plot(y_coord_screen, S_ex1(n_screen_0 + msh.np),'DisplayName', 'Numerical', 'color', '#1e8080')
+plot(y_coord_screen, S_ex1(n_screen_0),'DisplayName', 'Numerical', 'color', '#1e8080')
 hold on
-plot(y_coord_screen, ones(1, length(y_coord_screen))*real(S1), 'DisplayName', 'analytic', 'color', 'red')
+plot(y_coord_screen, ones(1, length(y_coord_screen))*real(S1), 'DisplayName', 'Analytic', 'color', 'red')
 hold on
-title('Intensity at the screen at $x=0$m','Interpreter','latex')
+title('Intensity at $x=0$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
 xlim([-h/2*1e-6, h/2*1e-6])
 %ylim([0, 2e-5])
 legend()
+disp(['relative intensity error at x=0: ',num2str(error_x0),' %'])
 
-% Calculate indices of the second screen at x = L
-n_screen_L = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h-1)-1) * My;
+
+% Calculate indices of the second screen at x = L (y-surfaces)
+n_screen_L = 1 + (idx_xL - 1) * Mx + ((idx_ymh_h:idx_yph_h-1)-1) * My +msh.np;
+% calculate relative error
+error_xL = abs(mean(S_ex1(n_screen_L))-real(S3))/real(S3)*100;
 % Plot avarage power on screen x=L over associated y-coordinates
 figure(3)
-plot(y_coord_screen, S_ex1(n_screen_L + msh.np), 'DisplayName', 'Numerical', 'color', '#1e8080')
+plot(y_coord_screen, S_ex1(n_screen_L), 'DisplayName', 'Numerical', 'color', '#1e8080')
 hold on
-plot(y_coord_screen, ones(1,length(y_coord_screen))*real(S3), 'DisplayName', 'analytic', 'color', 'red')
+plot(y_coord_screen, ones(1,length(y_coord_screen))*real(S3), 'DisplayName', 'Analytic', 'color', 'red')
 hold on
-title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
+title('Intensity at $x=L=10^6$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
 xlim([-h/2*1e-6, h/2*1e-6])
 %ylim([0, 5e-5])
 legend()
+disp(['relative intensity error at x=L: ',num2str(error_xL),' %'])
+%end 
 
-
-
-% Calculate analytic intensity across whole domain
-x_pos = msh.xmesh;
-[e_pos, h_pos, s_pos] = analytic_sol_ypol(x_pos, E1, E2, lambda_1, lambda_2, L*1e-6/2, a*1e-6, 2, le^2);
-% Plot avarage power on screen x=L over associated y-coordinates
-figure(4)
-plot(x_pos, e_pos./max(e_pos), 'DisplayName', 'electric field', 'color', '#1e8080')
-hold on
-plot(x_pos, s_pos./max(s_pos), 'DisplayName', 'intensity', 'color', 'red')
-hold on
-title('normalized analytic solutions across whole domain','Interpreter','latex')
-xlabel('Position in the domain $x$ (m)','Interpreter','latex')
-ylabel('Intensity $I$','Interpreter','latex')
-legend()
-
-
+% numeric intensity in y-surfaces (= wave intensity)
 figure(5)
-s_surf = reshape(S_ex1(idx_2_plot,1), [msh.nx, msh.ny]);
-s_surf_plot = surf(X,Y,s_surf');
-title('numeric calculated intensity','Interpreter','latex')
-%xlim([0, L*1e-6])
-%ylim([0, h/2*1e-6])
+s_surf = reshape(S_ex1((1+np:2*np),1), [msh.nx, msh.ny]);
+s_surf_plot = surf(X,Y,real(s_surf'));
+title('Numeric intensity across domain','Interpreter','latex')
+xlabel('$x$ (m)','Interpreter','latex')
+ylabel('$y$ (m)','Interpreter','latex')
+xlim([0, L*1e-6])
+ylim([0, h/2*1e-6])
 set(s_surf_plot,'LineStyle','none')
 colormap winter;
+
 
