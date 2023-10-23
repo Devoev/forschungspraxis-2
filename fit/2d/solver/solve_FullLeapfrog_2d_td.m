@@ -1,6 +1,6 @@
 function [ebow_new,hbow_new]=solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,mmui,mepsi,kaps,c,dt,W)
-% solve_leapfrog_2d_td executes an explicit time integration step utilizing
-% the leapfrog algorithmn
+% solve_FullLeapfrog_2d_td executes an explicit time integration step 
+% utilizing the leapfrog algorithmn including a conductivity matrix
 %
 % Inputs:
 %   ebow_old    - Vector with integrated E-field values of start time 

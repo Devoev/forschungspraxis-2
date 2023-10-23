@@ -1,16 +1,24 @@
 function [MAT] = conductivePML_2D(bc, msh, MAT, fmin)
-% createMeps_2D creates permittivity matrix for 2D mesh
+% conductivePML_2D creates a conductivity matrix, creating an absorbing
+% boundary for a given domain
 %
 % Input
+% bc                -Boundary condition object, including the information
+%                    where to set an open boundary and the size of the PML
+%                    layer in cells. Example:
+%                    bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];
+%                    bc.NPML = [1,1,1,1]*3*elem_per_wavelength;
+%                    Recommended is a width of 6 wavelengths per PML layer.
+%                    Therefore, the cells in the given example have duoble
+%                    the edge length in the PML region compared to normal
+%                    regions
 % msh               -2D mesh object
-% ds                -primary edge matrix
-% da                -primary face matrix
-% dat               -dual face matrix
-% rel_eps           -vector with distribution of relative permeability
-% eps0              -permeability of vacuum
+% MAT               -MAT object containg all relevant matrices
+% fmin              -Minimal excitation frequency
 %
 % Output
-% meps              -permittivity matrix
+% MAT               -MAT object, now including a conductivity matrix
+%                    to simulate the absorbing boundary
 
 
 % Get basic mesh parameters
