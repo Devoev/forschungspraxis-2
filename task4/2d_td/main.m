@@ -685,8 +685,8 @@ elseif polarization == 2
     e_surf = reshape(ebow_new(np+1:2*np,1)/le, [msh.nx, msh.ny]);
 end
 e_surf_plot = surf(X,Y,e_surf');
-xlim([min(xmesh), max(xmesh)])
-ylim([min(ymesh), max(ymesh)])
+xlim([0, L*1e-6])
+ylim([-h/2*1e-6, h/2*1e-6])
 set(e_surf_plot,'LineStyle','none')
 view(2)
 colormap winter;
