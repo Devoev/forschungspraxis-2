@@ -113,7 +113,8 @@ MAT.mepsi = nullInv(MAT.meps);
 
 % TD params
 dt = CFL(msh, MAT);
-tend = 30/f1;
+t_spread = sqrt((1/2*h)^2 + L^2)/c;
+tend = t_spread + 3/f1;
 nt = ceil(tend/dt);
 
 % Excitation
