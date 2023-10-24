@@ -21,7 +21,7 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 1;         % Whether to use the symmetry in y direction
+use_y_symmetry = 0;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_field = 0;             % Plot the 2D electrical field
 plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
@@ -65,7 +65,7 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 
-offset = [0,0,70,0];                         % Total offset from boundaries  TODO: FIX offsets
+offset = [70,0,70,0];                         % Total offset from boundaries  TODO: FIX offsets
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 
 %% Generate Mesh
@@ -104,9 +104,6 @@ idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + offset(4);
 jsbow_bc = NaN(3*msh.np, 1);
 ebow_bc = NaN(3*msh.np, 1);
 ebow_bc(idx_bc) = 1;
-
-
-
 
 %% Apply bc and create matrices
 [bc, W, ebow_bc, jsbow] = apply_bc(msh, bc, ebow_bc, jsbow_bc);
@@ -173,7 +170,6 @@ for i = 1:nt
 end
 
 %% Solve for f2
-
 % init Vectors
 ebow = zeros(3*msh.np, nt);
 hbow = zeros(3*msh.np, nt);
@@ -222,83 +218,112 @@ for i = 1:nt
 end
 
 %% Postprocessing
+% Calculate Intensities
+[I_f1,y] = calc_intensity(msh, ebow_abs_f1, offset);
+if max(I_f1) ~= 0
+    I_f1 = I_f1/max(I_f1);
+end
 
-% sum ebow after simulation
-ebow_abs = ebow_abs_f1 + ebow_abs_f2;
+[I_f2,y] = calc_intensity(msh, ebow_abs_f2, offset);
+if max(I_f2) ~= 0
+    I_f2 = I_f2/max(I_f2);
+end
 
-[~,y] = calc_intensity(msh, ebow_abs, offset);
+I_sum = I_f1 + I_f2;
+if max(I_sum) ~= 0
+    I_sum = I_sum/max(I_sum);
+end
 
-% componentwise analytically comparison
+% Calculate min and max locations
+[d_max_f1,d_min_f1] = calc_max_min_pos(y, L, d, lambda1);
+[d_max_f2,d_min_f2] = calc_max_min_pos(y, L, d, lambda2);
+
+%% componentwise analytically solution (farfield)
 I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
 I1_farfield = I1_farfield / max(I1_farfield);
 I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
 I2_farfield = I2_farfield / max(I2_farfield);
+Isum_farfield = 1/2*(I1_farfield + I2_farfield);
 
 figure
-plot(y, I1_farfield, 'DisplayName', 'Farfiel f1', 'color', '#3d00ff')
+plot(y, I1_farfield, 'DisplayName', 'Farfield f1', 'color', '#77AC30')
 hold on
-plot(y, I2_farfield, 'DisplayName', 'Farfiel f2', 'color', '#3d00ff')
-% hold on
-%scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
-% hold on;
-% scatter(dark, zeros(max(size(dark)),1), "black", 'filled');
+plot(y, I2_farfield, 'DisplayName', 'Farfield f2', 'color', '#3d00ff')
+hold on
+scatter(d_max_f1, zeros(max(size(d_max_f1)),1),'filled', 'DisplayName', 'max f1', 'color', 'green');
+hold on;
+scatter(d_min_f1, zeros(max(size(d_min_f1)),1),'DisplayName', 'min f1', 'color', 'green');
+hold on
+scatter(d_max_f2, zeros(max(size(d_max_f2)),1),'filled', 'DisplayName', 'max f2', 'color', 'blue');
+hold on;
+scatter(d_min_f2, zeros(max(size(d_min_f2)),1),'DisplayName', 'min f2', 'color', 'blue');
 title('Analytical solution (farfield) at the screen at $x=L=10^6$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
 xlim([-h/2, h/2])
 legend()
 
+%% componentwise analytically solution (helmholtz)
 I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
+I1_helmholtz = I1_helmholtz / max(I1_helmholtz);
 I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
+I2_helmholtz = I2_helmholtz / max(I2_helmholtz);
+Isum_helmholtz = 1/2*(I1_helmholtz + I2_helmholtz);
 
-% sum ebow after simulation
-ebow_abs = ebow_abs_f1 + ebow_abs_f2;
+figure
+plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#77AC30')
+hold on
+plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz f2', 'color', '#3d00ff')
+% hold on
+%scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
+% hold on;
+% scatter(dark, zeros(max(size(dark)),1), "black", 'filled');
+title('Analytical solution (helmoltz) at the screen at $x=L=10^6$m','Interpreter','latex')
+xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+ylabel('Intensity $I$','Interpreter','latex')
+xlim([-h/2, h/2])
+legend()
 
-% Intensity calculation
-[I,y] = calc_intensity(msh, ebow_abs, offset);
-if max(I) ~= 0
-    I = I/max(I);
-end
+%% componentwise comparison (for f1)
+figure
+plot(y, I1_farfield, 'DisplayName', 'Farfield f1', 'color', '#77AC30')
+hold on
+plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#3d00ff')
+hold on
+plot(y, I_f1, 'DisplayName', 'Numeric f1', 'color', '#D95319')
+title('Comparison Farfield, Helmholtz and Numeric solution for f1','Interpreter','latex')
+xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+ylabel('Intensity $I$','Interpreter','latex')
+xlim([-h/2, h/2])
+legend()
 
-if plot_intensity
-    figure
-    plot(y, I, 'DisplayName', 'Numerical', 'color', '#1e8080')
-    hold on
-    title('Intensity at the screen at $x=L=10^6$m','Interpreter','latex')
-    xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-    ylabel('Intensity $I$','Interpreter','latex')
-    xlim([-h/2, h/2])
-    legend()
-end
+%% combined wave comparison
+figure
+plot(y, I_sum, 'DisplayName', 'Numerical', 'color', '#D95319')
+hold on
+plot(y, Isum_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
+hold on
+plot(y, Isum_farfield, 'DisplayName', 'Farfield', 'color', '#77AC30')
+title('Intensity combined waves at $x=L=10^6$m','Interpreter','latex')
+xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+ylabel('Intensity $I$','Interpreter','latex')
+xlim([-h/2, h/2])
+legend()
 
-if plot_intensity_colored
-    plot(y, I1, 'DisplayName', 'Wave 1', 'color', '#3d00ff')
-    plot(y, I2, 'DisplayName', 'Wave 2', 'color', '#00ff00')
-end
+%% Error calculation
+I_err_f1    = norm(I_f1 - I1_farfield)/norm(I1_farfield);
+I_err_f2    = norm(I_f2 - I2_farfield)/norm(I2_farfield);
+I_err       = norm(I_sum - Isum_farfield)/norm(Isum_farfield);
 
-
-%% verifications
-
-% Double slit and helmholtz formula
-I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
-I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
-I_farfield = I1_farfield + I2_farfield;
-I_farfield = I_farfield/max(I_farfield);
-
-I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
-I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
-I_helmholtz = I1_helmholtz + I2_helmholtz;
-I_helmholtz = I_helmholtz/max(I_helmholtz);
-
-if plot_intensity_ana
-    plot(y, I_farfield, 'r--', 'DisplayName', 'Analytical (farfield)')
-    plot(y, I_helmholtz, 'b--', 'DisplayName', 'Analytical (Helmholtz)')
-end
-
-% Error calculation
-I_err = norm(I - I_farfield)/norm(I_farfield);
-I_err_helmholtz = norm(I - I_helmholtz)/norm(I_helmholtz);
+I_err_f1_helmholtz  = norm(I_f1 - I1_helmholtz)/norm(I1_helmholtz);
+I_err_f2_helmholtz  = norm(I_f2 - I2_helmholtz)/norm(I2_helmholtz);
+I_err_helmholtz     = norm(I_sum - Isum_helmholtz)/norm(Isum_helmholtz);
 if calc_intensity_err
-    fprintf('Relative L2 error between numerical and farfield solution = %f%% \n', 100*I_err)
-    fprintf('Relative L2 error between numerical and Helmholtz solution = %f%%', 100*I_err_helmholtz)
+    fprintf('Rel. L2 err numerical and farfield f1 = %f%% \n', 100*I_err_f1)
+    fprintf('Rel. L2 err numerical and farfield f2 = %f%% \n', 100*I_err_f2)
+    fprintf('Rel. L2 err numerical and farfield combined = %f%% \n', 100*I_err)
+
+    fprintf('Rel. L2 err numerical and helmholtz f1 = %f%% \n', 100*I_err_f1_helmholtz)
+    fprintf('Rel. L2 err numerical and helmholtz f2 = %f%% \n', 100*I_err_f2_helmholtz)
+    fprintf('Rel. L2 err numerical and helmholtz combined = %f%% \n', 100*I_err_helmholtz)
 end
