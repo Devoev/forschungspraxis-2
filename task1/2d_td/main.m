@@ -65,13 +65,15 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 
-offset = [70,0,70,0];                         % Total offset from boundaries  TODO: FIX offsets
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 
 %% Generate Mesh
 
 % Geo params
 elem_per_wavelength = 10;
+wavelengths_pml = 6;
+bc.NPML = [1,1,1,1]*wavelengths_pml*elem_per_wavelength;
+offset =  [1,1,1,1]*(wavelengths_pml + 1)*elem_per_wavelength;
 dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for offset
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 
@@ -228,16 +230,18 @@ end
 %% Postprocessing
 % Calculate Intensities
 [I_f1,y] = calc_intensity(msh, ebow_abs_f1, offset);
+[I_f2,y] = calc_intensity(msh, ebow_abs_f2, offset);
+I_sum = I_f1 + I_f2;
+
+% Norm Intensities
 if max(I_f1) ~= 0
     I_f1 = I_f1/max(I_f1);
 end
 
-[I_f2,y] = calc_intensity(msh, ebow_abs_f2, offset);
 if max(I_f2) ~= 0
     I_f2 = I_f2/max(I_f2);
 end
 
-I_sum = I_f1 + I_f2;
 if max(I_sum) ~= 0
     I_sum = I_sum/max(I_sum);
 end
@@ -247,11 +251,14 @@ end
 [d_max_f2,d_min_f2] = calc_max_min_pos(y, L, d, lambda2);
 
 %% componentwise analytically solution (farfield)
+% calc farfield analytical solution
 I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
-I1_farfield = I1_farfield / max(I1_farfield);
 I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
+Isum_farfield = I1_farfield + I2_farfield;
+% norm intensities
+I1_farfield = I1_farfield / max(I1_farfield);
 I2_farfield = I2_farfield / max(I2_farfield);
-Isum_farfield = 1/2*(I1_farfield + I2_farfield);
+Isum_farfield = Isum_farfield / max(Isum_farfield);
 
 figure
 plot(y, I1_farfield, 'DisplayName', 'Farfield f1', 'color', '#77AC30')
@@ -272,20 +279,19 @@ xlim([-h/2, h/2])
 legend()
 
 %% componentwise analytically solution (helmholtz)
+% calc helmholtz analytical solution
 I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
-I1_helmholtz = I1_helmholtz / max(I1_helmholtz);
 I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
+Isum_helmholtz = I1_helmholtz + I2_helmholtz;
+% norm intensities
+I1_helmholtz = I1_helmholtz / max(I1_helmholtz);
 I2_helmholtz = I2_helmholtz / max(I2_helmholtz);
-Isum_helmholtz = 1/2*(I1_helmholtz + I2_helmholtz);
+Isum_helmholtz = Isum_helmholtz / max(Isum_helmholtz);
 
 figure
 plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#77AC30')
 hold on
 plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz f2', 'color', '#3d00ff')
-% hold on
-%scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
-% hold on;
-% scatter(dark, zeros(max(size(dark)),1), "black", 'filled');
 title('Analytical solution (helmoltz) at the screen at $x=L=10^6$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
