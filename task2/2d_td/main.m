@@ -248,7 +248,7 @@ figure
 plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#77AC30')
 hold on
 plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz f2', 'color', '#3d00ff')
-title('Analytical solution (Helmholtz) at the screen at $x=L=10^{-1}$m','Interpreter','latex')
+title('Analytical solution (Helmholtz) at the screen at $x=L=10^{-6}$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
 xlim([0, h/2])
