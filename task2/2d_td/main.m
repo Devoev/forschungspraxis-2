@@ -9,8 +9,8 @@ path_mat_func = '../fit/2d/matrices';
 path_solver_func = '../fit/2d/solver';
 path_solver_util = '../fit/2d/util';
 path_util_func = '../fit/util';
-path_verify_func = '../task1/verifications';
-path_2d_td_func = '../task1/2d_td';
+path_verify_func = '../task2/verifications';
+path_2d_td_func = '../task2/2d_td';
 
 % Add paths
 cd('../');
@@ -20,8 +20,6 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-test_farfield = 1;          % Calculate the fresnel number and test the farfield condition
-use_y_symmetry = 0;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_field = 0;             % Plot the 2D electrical field
 calc_intensity_err = 1;     % Calculates the error between analytical and numerical solutions
@@ -57,32 +55,24 @@ delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
 
-if test_farfield
-    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
-    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
+if polarisation == 'y'
+    bc.bc = ["PMC", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
+elseif polarisation == 'z'
+    bc.bc = ["PEC", "OPEN", "OPEN", "OPEN"];
 end
-
-bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 
 %% Generate Mesh
 
 % Geo params
 elem_per_wavelength = 10;
 wavelengths_pml = 6;
-bc.NPML = [1,1,1,1]*wavelengths_pml*elem_per_wavelength;
-offset =  [1,1,1,1]*(wavelengths_pml + 1)*elem_per_wavelength;
+bc.NPML = [0,1,1,1]*wavelengths_pml*elem_per_wavelength;
+offset =  [0,1,1,1]*(wavelengths_pml + 1)*elem_per_wavelength;
 dx = lambda1*(offset(2) + offset(4))/elem_per_wavelength;  % Extra space in x direction for offset
 xmesh = linspace(0, L + dx, ceil( (L + dx)/lambda1*elem_per_wavelength) );
 
-if use_y_symmetry
-    offset(1) = 0;
-    bc.bc(1) = 'PMC';
-    dy = lambda1*offset(3)/elem_per_wavelength;  % Extra space in y direction for offset
-    ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
-else
-    dy = lambda1*(offset(1) + offset(3))/elem_per_wavelength;  % Extra space in y direction for offset
-    ymesh = linspace(-(h + dy)/2, (h + dy)/2, ceil( (h + dy)/lambda1*elem_per_wavelength ));
-end
+dy = lambda1*offset(3)/elem_per_wavelength;  % Extra space in y direction for offset
+ymesh = linspace(0, h/2 + dy, ceil( (h/2 + dy)/lambda1*elem_per_wavelength ));
 
 msh = cartMesh_2D(xmesh, ymesh);
 
@@ -99,7 +89,7 @@ boxesMuiR(1).value = 1;
 material_regions.boxesMuiR = boxesMuiR;
 
 % Set rhs and bc vectors
-idx_bc = calc_slit_idx(msh, d, delta, use_y_symmetry, polarisation) + offset(4); % Transform y-indices to canonical index
+idx_bc = calc_slit_idx(msh, d, delta, polarisation) + offset(4); % Transform y-indices to canonical index
 jsbow_bc = NaN(3*msh.np, 1);
 ebow_bc = NaN(3*msh.np, 1);
 ebow_bc(idx_bc) = 1;
@@ -142,7 +132,7 @@ for i = 1:nt
     % Calc leapfrog
     %NEW
     %[ebow_new, hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
-     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
+    [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
 
 
     % Apply open boundary with mur cond
@@ -160,8 +150,8 @@ for i = 1:nt
         figure(1)
         e_surf_plot = surf(X,Y,e_surf');
 
-        xlim([0, L])
-        ylim([-h/2, h/2])
+        xlim([dx/2, L + dx/2])
+        ylim([0, h/2])
         set(e_surf_plot,'LineStyle','none')
         view(2)
         colormap hot;
@@ -210,8 +200,8 @@ for i = 1:nt
         figure(1)
         e_surf_plot = surf(X,Y,e_surf');
 
-        xlim([0, L])
-        ylim([-h/2, h/2])
+        xlim([dx/2, L + dx/2])
+        ylim([0, h/2])
         set(e_surf_plot,'LineStyle','none')
         view(2)
         colormap hot;
@@ -243,42 +233,11 @@ if max(I_sum) ~= 0
     I_sum = I_sum/max(I_sum);
 end
 
-% Calculate min and max locations
-[d_max_f1,d_min_f1] = calc_max_min_pos(y, L, d, lambda1);
-[d_max_f2,d_min_f2] = calc_max_min_pos(y, L, d, lambda2);
-
-%% componentwise analytically solution (farfield)
-% calc farfield analytical solution
-I1_farfield = intensity_farfield(E1, lambda1, d, delta, L, y);
-I2_farfield = intensity_farfield(E2, lambda2, d, delta, L, y);
-Isum_farfield = I1_farfield + I2_farfield;
-% norm intensities
-I1_farfield = I1_farfield / max(I1_farfield);
-I2_farfield = I2_farfield / max(I2_farfield);
-Isum_farfield = Isum_farfield / max(Isum_farfield);
-
-figure
-plot(y, I1_farfield, 'DisplayName', 'Farfield f1', 'color', '#77AC30')
-hold on
-plot(y, I2_farfield, 'DisplayName', 'Farfield f2', 'color', '#3d00ff')
-hold on
-scatter(d_max_f1, zeros(max(size(d_max_f1)),1),'filled', 'DisplayName', 'max f1', 'color', 'green');
-hold on;
-scatter(d_min_f1, zeros(max(size(d_min_f1)),1),'DisplayName', 'min f1', 'color', 'green');
-hold on
-scatter(d_max_f2, zeros(max(size(d_max_f2)),1),'filled', 'DisplayName', 'max f2', 'color', 'blue');
-hold on;
-scatter(d_min_f2, zeros(max(size(d_min_f2)),1),'DisplayName', 'min f2', 'color', 'blue');
-title('Analytical solution (farfield) at the screen at $x=L=10^6$m','Interpreter','latex')
-xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-ylabel('Intensity $I$','Interpreter','latex')
-xlim([-h/2, h/2])
-legend()
 
 %% componentwise analytically solution (helmholtz)
 % calc helmholtz analytical solution
-I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
-I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
+I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, length(idx_bc));
+I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, length(idx_bc));
 Isum_helmholtz = I1_helmholtz + I2_helmholtz;
 % norm intensities
 I1_helmholtz = I1_helmholtz / max(I1_helmholtz);
@@ -289,51 +248,66 @@ figure
 plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#77AC30')
 hold on
 plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz f2', 'color', '#3d00ff')
-title('Analytical solution (helmoltz) at the screen at $x=L=10^6$m','Interpreter','latex')
+title('Analytical solution (Helmholtz) at the screen at $x=L=10^{-6}$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
-xlim([-h/2, h/2])
+xlim([0, h/2])
 legend()
+
+
+%% Calculate min and max locations
+[d_max_f1,d_min_f1] = calc_max_min_pos(y, L, d, lambda1);
+[d_max_f2,d_min_f2] = calc_max_min_pos(y, L, d, lambda2);
+
 
 %% componentwise comparison (for f1)
 figure
-plot(y, I1_farfield, 'DisplayName', 'Farfield f1', 'color', '#77AC30')
+plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
 hold on
-plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#3d00ff')
+plot(y, I_f1, 'DisplayName', 'Numeric', 'color', '#D95319')
 hold on
-plot(y, I_f1, 'DisplayName', 'Numeric f1', 'color', '#D95319')
-title('Comparison Farfield, Helmholtz and Numeric solution for f1','Interpreter','latex')
+scatter(d_max_f1, zeros(max(size(d_max_f1)),1),'filled', 'DisplayName', 'max', 'color', 'green');
+hold on;
+scatter(d_min_f1, zeros(max(size(d_min_f1)),1),'DisplayName', 'min', 'color', 'green');
+title('Comparison Helmholtz and Numeric solution for $f_1$','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
-xlim([-h/2, h/2])
+xlim([0, h/2])
 legend()
+
+
+%% componentwise comparison (for f2)
+figure
+plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
+hold on
+plot(y, I_f2, 'DisplayName', 'Numeric', 'color', '#D95319')
+hold on
+scatter(d_max_f2, zeros(max(size(d_max_f2)),1),'filled', 'DisplayName', 'max', 'color', 'green');
+hold on;
+scatter(d_min_f2, zeros(max(size(d_min_f2)),1),'DisplayName', 'min', 'color', 'green');
+title('Comparison Helmholtz and Numeric solution for $f_2$','Interpreter','latex')
+xlabel('Position at the screen $y$ (m)','Interpreter','latex')
+ylabel('Intensity $I$','Interpreter','latex')
+xlim([0, h/2])
+legend()
+
 
 %% combined wave comparison
 figure
 plot(y, I_sum, 'DisplayName', 'Numerical', 'color', '#D95319')
 hold on
 plot(y, Isum_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
-hold on
-plot(y, Isum_farfield, 'DisplayName', 'Farfield', 'color', '#77AC30')
-title('Intensity combined waves at $x=L=10^6$m','Interpreter','latex')
+title('Intensity combined waves at $x=L=10^{-6}$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
-xlim([-h/2, h/2])
+xlim([0, h/2])
 legend()
 
 %% Error calculation
-I_err_f1    = norm(I_f1 - I1_farfield)/norm(I1_farfield);
-I_err_f2    = norm(I_f2 - I2_farfield)/norm(I2_farfield);
-I_err       = norm(I_sum - Isum_farfield)/norm(Isum_farfield);
-
 I_err_f1_helmholtz  = norm(I_f1 - I1_helmholtz)/norm(I1_helmholtz);
 I_err_f2_helmholtz  = norm(I_f2 - I2_helmholtz)/norm(I2_helmholtz);
 I_err_helmholtz     = norm(I_sum - Isum_helmholtz)/norm(Isum_helmholtz);
 if calc_intensity_err
-    fprintf('Rel. L2 err numerical and farfield f1 = %f%% \n', 100*I_err_f1)
-    fprintf('Rel. L2 err numerical and farfield f2 = %f%% \n', 100*I_err_f2)
-    fprintf('Rel. L2 err numerical and farfield combined = %f%% \n', 100*I_err)
-
     fprintf('Rel. L2 err numerical and helmholtz f1 = %f%% \n', 100*I_err_f1_helmholtz)
     fprintf('Rel. L2 err numerical and helmholtz f2 = %f%% \n', 100*I_err_f2_helmholtz)
     fprintf('Rel. L2 err numerical and helmholtz combined = %f%% \n', 100*I_err_helmholtz)
