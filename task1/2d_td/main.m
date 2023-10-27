@@ -24,9 +24,6 @@ test_farfield = 0;          % Calculate the fresnel number and test the farfield
 use_y_symmetry = 0;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_field = 0;             % Plot the 2D electrical field
-plot_intensity = 1;         % Plot the numerically calculated intensity on the screen
-plot_intensity_colored = 0; % Plot the calculated intensities in the actual light colors
-plot_intensity_ana = 1;     % Plot the analytically calculated intensity on the screen
 calc_intensity_err = 1;     % Calculates the error between analytical and numerical solutions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
