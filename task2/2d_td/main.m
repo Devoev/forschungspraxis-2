@@ -236,8 +236,8 @@ end
 
 %% componentwise analytically solution (helmholtz)
 % calc helmholtz analytical solution
-I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
-I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
+I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, length(idx_bc));
+I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, length(idx_bc));
 Isum_helmholtz = I1_helmholtz + I2_helmholtz;
 % norm intensities
 I1_helmholtz = I1_helmholtz / max(I1_helmholtz);
