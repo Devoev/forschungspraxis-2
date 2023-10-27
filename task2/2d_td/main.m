@@ -262,14 +262,14 @@ legend()
 
 %% componentwise comparison (for f1)
 figure
-plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#3d00ff')
+plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
 hold on
-plot(y, I_f1, 'DisplayName', 'Numeric f1', 'color', '#D95319')
+plot(y, I_f1, 'DisplayName', 'Numeric', 'color', '#D95319')
 hold on
-scatter(d_max_f1, zeros(max(size(d_max_f1)),1),'filled', 'DisplayName', 'max f1', 'color', 'green');
+scatter(d_max_f1, zeros(max(size(d_max_f1)),1),'filled', 'DisplayName', 'max', 'color', 'green');
 hold on;
-scatter(d_min_f1, zeros(max(size(d_min_f1)),1),'DisplayName', 'min f1', 'color', 'green');
-title('Comparison Helmholtz and Numeric solution for f1','Interpreter','latex')
+scatter(d_min_f1, zeros(max(size(d_min_f1)),1),'DisplayName', 'min', 'color', 'green');
+title('Comparison Helmholtz and Numeric solution for $f_1$','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
 xlim([0, h/2])
@@ -278,14 +278,14 @@ legend()
 
 %% componentwise comparison (for f2)
 figure
-plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f2', 'color', '#3d00ff')
+plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
 hold on
-plot(y, I_f1, 'DisplayName', 'Numeric f2', 'color', '#D95319')
+plot(y, I_f2, 'DisplayName', 'Numeric', 'color', '#D95319')
 hold on
-scatter(d_max_f2, zeros(max(size(d_max_f2)),1),'filled', 'DisplayName', 'max f2', 'color', 'green');
+scatter(d_max_f2, zeros(max(size(d_max_f2)),1),'filled', 'DisplayName', 'max', 'color', 'green');
 hold on;
-scatter(d_min_f2, zeros(max(size(d_min_f2)),1),'DisplayName', 'min f2', 'color', 'green');
-title('Comparison Helmholtz and Numeric solution for f2','Interpreter','latex')
+scatter(d_min_f2, zeros(max(size(d_min_f2)),1),'DisplayName', 'min', 'color', 'green');
+title('Comparison Helmholtz and Numeric solution for $f_2$','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
 ylabel('Intensity $I$','Interpreter','latex')
 xlim([0, h/2])
