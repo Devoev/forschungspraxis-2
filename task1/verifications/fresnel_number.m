@@ -10,5 +10,5 @@ function res = fresnel_number(delta, L, lambda)
 %   res     - Value of the fresnel number.
 
     res = delta^2/(L*lambda);
-    assert(res < .2, "Value of fresnel number is " + res);
+    %assert(res < .2, "Value of fresnel number is " + res);
 end

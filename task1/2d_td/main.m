@@ -20,7 +20,7 @@ addpath(path_msh_func, path_mat_func, path_solver_func, path_solver_util, path_u
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Options
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-test_farfield = 0;          % Calculate the fresnel number and test the farfield condition
+test_farfield = 1;          % Calculate the fresnel number and test the farfield condition
 use_y_symmetry = 0;         % Whether to use the symmetry in y direction
 polarisation = 'z';         % Direction of polarisation of the electric field
 plot_field = 0;             % Plot the 2D electrical field
@@ -40,11 +40,6 @@ lambda2 = 510e-9;   % [m]
 f2 = c/lambda2;     % [Hz]
 E2 = 500;           % [V/m]
 
-if test_farfield
-    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
-    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
-end
-
 % Problem size in wavelength        |
 %               L3                  |      b: middle index
 %                y                  |
@@ -61,6 +56,11 @@ d = 4e-6;       % slit distance
 delta = 1e-6;   % slit width
 h = 8e-6;       % screen height
 L = 10e-6;      % screen distance
+
+if test_farfield
+    fprintf('Fresnel number = %f for wave 1', fresnel_number(delta, L, lambda1))
+    fprintf('Fresnel number = %f for wave 2', fresnel_number(delta, L, lambda2))
+end
 
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];   % [L1, L2, L3, L4]
 
