@@ -12,14 +12,14 @@ parent = fileparts(parent) ;
 parent = fileparts(parent);
 
 % Paths to add
-path_msh_func = append(parent, '\fit\2d\mesh');
-path_mat_func = append(parent, '\fit\2d\matrices');
-path_solver_func = append(parent, '\fit\2d\solver');
-path_util_func = append(parent, '\fit\2d\util');
-path_verifications = append(parent, '\task3\verifications');
+path_msh_func = '../fit/2d/mesh';
+path_mat_func = '../fit/2d/matrices';
+path_solver_func = '../fit/2d/solver';
+path_util_func = '../fit/2d/util';
 
 % Add paths
-addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_verifications)
+cd('../');
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 
 %% Define excitation
@@ -40,14 +40,21 @@ f2          = sqrt(material_regions.mu0i/material_regions.epsilon0)/lambda_2;
 E2          = 500;
 func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 
+func_exi =@(t) func_exi_1(t) + func_exi_2(t);
 
 %% Define important parameters for the simulation
 
 % Polarization: 1 for z and 2 for y
 polarization = 2;
 
+% show field plots during calculation
+field_plots = true;
+
+% mesh refinement in the thin film
+mesh_refinement = false;
+
 % Elements per wavelength
-elem_per_wavelength = 15;
+elem_per_wavelength = 18;
 
 % Offset in each direction
 offset = [0,3*elem_per_wavelength,0,6*elem_per_wavelength];
@@ -90,9 +97,13 @@ points_y = num_e * h + 1;
 x_offset1 = (-offset(4):-1) * le;
 x_offset2 = L * 1e-6 + (1:offset(2)) * le;
 % refinement of factor 4 in thin film
-x_basic = [linspace(0, (L/2)*1e-6, num_e*(L/2)+1), ...
-    linspace((L/2)*1e-6 + le*0.25, (L/2+a)*1e-6 - le*0.25, 4*num_e*a-2), ...
-    linspace((L/2+a)*1e-6, L*1e-6, num_e*(L/2-a))];
+if mesh_refinement == true
+    x_basic = [linspace(0, (L/2)*1e-6, num_e*(L/2)+1), ...
+        linspace((L/2)*1e-6 + le/2, (L/2+a)*1e-6 - le/2, 2*num_e*a-2), ...
+        linspace((L/2+a)*1e-6, L*1e-6, num_e*(L/2-a)+1)];
+else
+    x_basic = [linspace(0, (L/2) * 1e-6, num_e*(L/2)+1), linspace((L/2) * 1e-6 + le, (L) * 1e-6, num_e*(L/2))];
+end
 xmesh = [x_offset1, x_basic, x_offset2];
 
 % Calculate ymesh with respect to the choosen offset
@@ -196,20 +207,21 @@ material_regions.boxesMuiR = boxesMuiR;
 
 % calc reflection arrival at x=0
 c0 = sqrt(MAT.mu0i/MAT.epsilon0);
-%t_end = (offset(4)*le/2 + L*1e-6)/c0 * 1.05
+% time of wave arrival + four percent (for possible num. errors)
+t_end = (offset(4)*le/2 + L*1e-6)/c0 *1.04
 
 
 %% Set up parameters for the simulation in time domain for excitation 1 
 
 % Time step size
-dt = CFL(msh, MAT);
+dt = CFL(msh, MAT)* 0.7;
 
 % Fit dt to period of excitation 1
-dt = 1/f1 / ceil(1/f1 / dt);
+%dt = 1/f1 / ceil(1/f2 / dt);
 
 % Calculate end time regarding the time needed for the calculation of the
 % on avarage emitted power
-t_end = (30+0.7)/f1;
+%t_end = (30+0.7)/f1;
 
 
 %% Simulate in time domain for excitation 1 
@@ -235,6 +247,9 @@ elseif polarization == 2
     idx_2_plot = np+1:2*np;
 end
 
+% init gridpoints for the plots
+[X,Y] = meshgrid(msh.xmesh, msh.ymesh);
+
 % Calculate time steps
 steps_movie = 0;
 for t = linspace(0,t_end,ceil(t_end/dt))
@@ -244,8 +259,8 @@ for t = linspace(0,t_end,ceil(t_end/dt))
     hbow_old = hbow_new;
 
     % Calculate value for excitation
-    e_exi_old = e_exi * func_exi_1(t);
-    e_exi_new = e_exi * func_exi_1(t+1);
+    e_exi_old = e_exi * func_exi(t);
+    e_exi_new = e_exi * func_exi(t+1);
 
     % Execute timestep with leapfrog
     [ebow_new,hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
@@ -262,29 +277,17 @@ for t = linspace(0,t_end,ceil(t_end/dt))
     % Plot excitation of the electric field
     steps_movie = steps_movie + 1;
 
-    if steps_movie == 10
+    if steps_movie == 10 && field_plots
 
         steps_movie = 0;
-
-        [X,Y] = meshgrid(xmesh, ymesh);
-        e_surf = reshape(ebow_new(idx_2_plot,1), [msh.nx, msh.ny]);
-        
-        figure(1)
-        e_surf_plot = surf(X,Y,e_surf');
-    
-        xlim([0, L*1e-6])
-        ylim([0, h/2*1e-6])
-        set(e_surf_plot,'LineStyle','none')
-        view(2)
-        colormap hot;
-        title('Absolute value of electric field','Interpreter','latex')
-        xlabel('$x$ (m)','Interpreter','latex')
-        ylabel('$y$ (m)','Interpreter','latex')
-        zlabel('Absolute value','Interpreter','latex')
+        field_surf_plot(msh,X,Y,idx_2_plot, ebow_new, L, h)
         drawnow
-        
     end
+end
 
+if ~(field_plots)
+    % plot only final ebow
+    field_surf_plot(msh,X,Y,idx_2_plot, ebow_new, L, h)
 end
 
 % Get time avarage of the power through each surface
@@ -292,8 +295,12 @@ S_ex1 = S_ex1/i_steps;
 
 
 %% Calculate analytical solution for the intensity for excitation 1
-[S1, S3] = AnaSolPoyntin(E1, f1, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
+[S1_f1, S3_f1] = AnaSolPoyntin(E1, f1, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
+[S1_f2, S3_f2] = AnaSolPoyntin(E2, f2, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
 
+% add intensities
+S1 = S1_f1 + S1_f2;
+S3 = S3_f1 + S3_f2;
 
 %% Plot avarage power on x=0 and x=L screen
 %if polarization == 2
@@ -349,4 +356,19 @@ ylim([0, h/2*1e-6])
 set(s_surf_plot,'LineStyle','none')
 colormap winter;
 
-
+function field_surf_plot(msh, X, Y, idx_2_plot, ebow_new, L, h)
+        e_surf = reshape(ebow_new(idx_2_plot,1), [msh.nx, msh.ny]);
+        
+        figure(1)
+        e_surf_plot = surf(X,Y,e_surf');
+    
+        xlim([0, L*1e-6])
+        ylim([0, h/2*1e-6])
+        set(e_surf_plot,'LineStyle','none')
+        view(2)
+        colormap hot;
+        title('Absolute value of electric field','Interpreter','latex')
+        xlabel('$x$ (m)','Interpreter','latex')
+        ylabel('$y$ (m)','Interpreter','latex')
+        zlabel('Absolute value','Interpreter','latex')
+end
