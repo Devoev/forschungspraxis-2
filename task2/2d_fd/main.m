@@ -155,8 +155,8 @@ end
 %% verifications
 
 % Analytical helmholtz formula
-I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, ceil(length(idx_bc)/2));
-I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, ceil(length(idx_bc)/2));
+I1_helmholtz = intensity_helmholtz(E1, lambda1, d, delta, L, y, length(idx_bc));
+I2_helmholtz = intensity_helmholtz(E2, lambda2, d, delta, L, y, length(idx_bc));
 I_helmholtz = I1_helmholtz + I2_helmholtz;
 I_helmholtz = I_helmholtz/max(I_helmholtz);
 
