@@ -117,7 +117,7 @@ ebow_exi_f2 = @(t) ebow_bc * (E2*cos(2*pi*f2*t));
 % init Vectors
 ebow = zeros(3*msh.np, nt);
 hbow = zeros(3*msh.np, nt);
-ebow_abs = zeros(msh.np, nt);
+ebow_abs_f1 = zeros(msh.np, nt);
 
 % Solve with leapfrog
 for i = 1:nt
