@@ -64,7 +64,7 @@ end
 %% Generate Mesh
 
 % Geo params
-elem_per_wavelength = 12;
+elem_per_wavelength = 10;
 wavelengths_pml = 6;
 bc.NPML = [0,1,1,1]*wavelengths_pml*elem_per_wavelength;
 offset =  [0,1,1,1]*(wavelengths_pml + 1)*elem_per_wavelength;
