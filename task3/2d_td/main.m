@@ -12,13 +12,12 @@ parent = fileparts(parent) ;
 parent = fileparts(parent);
 
 % Paths to add
-path_msh_func = '../fit/2d/mesh';
-path_mat_func = '../fit/2d/matrices';
-path_solver_func = '../fit/2d/solver';
-path_util_func = '../fit/2d/util';
+path_msh_func = append(parent, '\fit\2d\mesh');
+path_mat_func = append(parent, '\fit\2d\matrices');
+path_solver_func = append(parent, '\fit\2d\solver');
+path_util_func = append(parent, '\fit\2d\util');
 
 % Add paths
-cd('../');
 addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
 
 
@@ -40,7 +39,6 @@ f2          = sqrt(material_regions.mu0i/material_regions.epsilon0)/lambda_2;
 E2          = 500;
 func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 
-func_exi =@(t) func_exi_1(t) + func_exi_2(t);
 
 %% Define important parameters for the simulation
 
@@ -48,16 +46,13 @@ func_exi =@(t) func_exi_1(t) + func_exi_2(t);
 polarization = 2;
 
 % show field plots during calculation
-field_plots = true;
-
-% mesh refinement in the thin film
-mesh_refinement = false;
+field_plots = false;
 
 % Elements per wavelength
-elem_per_wavelength = 18;
+elem_per_wavelength = 12;
 
 % Offset in each direction
-offset = [0,3*elem_per_wavelength,0,6*elem_per_wavelength];
+offset = [0,8,0,12]*elem_per_wavelength;
 
 % Edit boundary conditions
 if polarization == 1
@@ -65,6 +60,7 @@ if polarization == 1
 elseif polarization == 2
     bc.bc = ["PEC", "OPEN", "PEC", "OPEN"];
 end
+bc.NPML = [0,8,0,8]*elem_per_wavelength - 3;
 
 
 %% Edit basic calculation domain 
@@ -86,24 +82,15 @@ le = min(lambda_1,lambda_2)/elem_per_wavelength;
 num_e   = 10 * ceil(0.1e-6 / le);
 le      = 1e-6 / num_e;
 
-% % Calculate offset in micro meter
-% offset = offset * num_e;
-
-% Calculate number of points in x- and y-direction
-points_x = num_e * L + 1;
+% Calculate number of points in y-direction
 points_y = num_e * h + 1;
 
 % Calculate xmesh with respect to the choosen offset
 x_offset1 = (-offset(4):-1) * le;
 x_offset2 = L * 1e-6 + (1:offset(2)) * le;
-% refinement of factor 4 in thin film
-if mesh_refinement == true
-    x_basic = [linspace(0, (L/2)*1e-6, num_e*(L/2)+1), ...
-        linspace((L/2)*1e-6 + le/2, (L/2+a)*1e-6 - le/2, 2*num_e*a-2), ...
-        linspace((L/2+a)*1e-6, L*1e-6, num_e*(L/2-a)+1)];
-else
-    x_basic = [linspace(0, (L/2) * 1e-6, num_e*(L/2)+1), linspace((L/2) * 1e-6 + le, (L) * 1e-6, num_e*(L/2))];
-end
+x_basic = [linspace(0, (L/2)*1e-6, num_e*(L/2)+1), ...
+    linspace((L/2)*1e-6 + le/2, (L/2+a)*1e-6 - le/2, ceil(2*num_e*a)), ...
+    linspace((L/2+a)*1e-6, L*1e-6, num_e*(L/2)+1)];
 xmesh = [x_offset1, x_basic, x_offset2];
 
 % Calculate ymesh with respect to the choosen offset
@@ -121,31 +108,32 @@ ny = msh.ny;
 np = msh.np;
 lz = msh.lz;
 
+
 %% Find important indices in xmesh and ymesh
 
 % Index of x = 0
-idx_x0      = find(xmesh == 0);
+idx_x0      = find(round(xmesh*1e6,4) == 0);
 
 % Index in x-direction for excitation (inside the offset!!!!)
-idx_exi     = idx_x0-(offset(4)/2);
+idx_exi     = bc.NPML(4) + 3;
 
 % Index of x = L/2
-idx_xL_h    = find(xmesh == L/2 * 1e-6);
+idx_xL_h    = find(round(xmesh*1e6,4) == L/2);
 
 % Index of x = L/2 + a
-idx_xL_h_a  = find(xmesh == (L/2 + a)* 1e-6);
+idx_xL_h_a  = find(round(xmesh*1e6,4) == L/2 + a);
 
 % Index of x = L
-idx_xL      = find(xmesh == L * 1e-6);
+idx_xL      = find(round(xmesh*1e6,4) == L);
 
 % Index of y = -h/2
-idx_ymh_h   = find(ymesh == -h/2 * 1e-6);
+idx_ymh_h   = find(round(ymesh*1e6,4) == -h/2);
 
 % Index of y = 0
-idx_y0      = find(ymesh == 0);
+idx_y0      = find(round(ymesh*1e6,4) == 0);
 
 % Index of y = h/2
-idx_yph_h   = find(ymesh == h/2 * 1e-6);
+idx_yph_h   = find(round(ymesh*1e6,4) == h/2);
 
 
 %% Create the vectors describing the excitation
@@ -180,7 +168,6 @@ end
 %% Edit material regions and add them to the object material_regions
 
 % Regions for relative permittivity
-% Relative permittivity everywhere equal to one
 boxesEpsilonR(1).box = [1, idx_xL_h, 1, ny];
 boxesEpsilonR(1).value = 1;
 boxesEpsilonR(2).box = [idx_xL_h, idx_xL_h_a, 1, ny];
@@ -205,29 +192,28 @@ material_regions.boxesMuiR = boxesMuiR;
 
 [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]); %#ok<NBRAK2> 
 
-% calc reflection arrival at x=0
-c0 = sqrt(MAT.mu0i/MAT.epsilon0);
-% time of wave arrival + four percent (for possible num. errors)
-t_end = (offset(4)*le/2 + L*1e-6)/c0 *1.04
+
+%% Calculate conductivity matrix for conductive PML (open boundary)
+
+[MAT] = conductivePML_2D(bc, msh, MAT, f1);
 
 
 %% Set up parameters for the simulation in time domain for excitation 1 
 
 % Time step size
-dt = CFL(msh, MAT)* 0.7;
+dt = CFL(msh, MAT);
 
 % Fit dt to period of excitation 1
-%dt = 1/f1 / ceil(1/f2 / dt);
+dt = 1/f1 / ceil(1/f1 / dt);
 
 % Calculate end time regarding the time needed for the calculation of the
 % on avarage emitted power
-%t_end = (30+0.7)/f1;
+% time of wave arrival + four percent (for possible num. errors)
+c0 = sqrt(MAT.mu0i/MAT.epsilon0);
+t_end = (1/3 * offset(4) *le + L/2 * 1e-6) * 2 / c0 + 3/f1;
 
 
 %% Simulate in time domain for excitation 1 
-
-% Initialize open boundary condition if needed
-[mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % Initialize ebow and hbow
 ebow_new = zeros(3*np,1);
@@ -252,21 +238,18 @@ end
 
 % Calculate time steps
 steps_movie = 0;
-for t = linspace(0,t_end,ceil(t_end/dt))
+for t = 0:dt:t_end
 
     % Old values
     ebow_old = ebow_new;
     hbow_old = hbow_new;
 
     % Calculate value for excitation
-    e_exi_old = e_exi * func_exi(t);
-    e_exi_new = e_exi * func_exi(t+1);
+    e_exi_old = e_exi * func_exi_1(t);
+    e_exi_new = e_exi * func_exi_1(t+dt);
 
     % Execute timestep with leapfrog
-    [ebow_new,hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
-
-    % Apply open boundary with mur condition
-    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
+    [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
 
     % Sum up power through each surface for one period before the end
     if t >= t_end - 1/f1
@@ -295,12 +278,12 @@ S_ex1 = S_ex1/i_steps;
 
 
 %% Calculate analytical solution for the intensity for excitation 1
-[S1_f1, S3_f1] = AnaSolPoyntin(E1, f1, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
-[S1_f2, S3_f2] = AnaSolPoyntin(E2, f2, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
+[S1_f1, S3_f1] = AnaSolPoyntin(E1, f1, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6, L/2 * 1e-6);
+% [S1_f2, S3_f2] = AnaSolPoyntin(E2, f2, 1 * material_regions.epsilon0, 4 * material_regions.epsilon0, material_regions.mu0i, material_regions.mu0i, a*1e-6);
 
 % add intensities
-S1 = S1_f1 + S1_f2;
-S3 = S3_f1 + S3_f2;
+S1 = S1_f1;
+S3 = S3_f1;
 
 %% Plot avarage power on x=0 and x=L screen
 %if polarization == 2
@@ -351,8 +334,8 @@ s_surf_plot = surf(X,Y,real(s_surf'));
 title('Numeric intensity across domain','Interpreter','latex')
 xlabel('$x$ (m)','Interpreter','latex')
 ylabel('$y$ (m)','Interpreter','latex')
-xlim([0, L*1e-6])
-ylim([0, h/2*1e-6])
+xlim([min(xmesh), max(xmesh)])
+ylim([0, h/2*1e-6 - le])
 set(s_surf_plot,'LineStyle','none')
 colormap winter;
 
