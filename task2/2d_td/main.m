@@ -64,7 +64,7 @@ end
 %% Generate Mesh
 
 % Geo params
-elem_per_wavelength = 10;
+elem_per_wavelength = 12;
 wavelengths_pml = 6;
 bc.NPML = [0,1,1,1]*wavelengths_pml*elem_per_wavelength;
 offset =  [0,1,1,1]*(wavelengths_pml + 1)*elem_per_wavelength;
@@ -245,12 +245,12 @@ I2_helmholtz = I2_helmholtz / max(I2_helmholtz);
 Isum_helmholtz = Isum_helmholtz / max(Isum_helmholtz);
 
 figure
-plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#77AC30')
+plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz f1', 'color', '#3d00ff')
 hold on
-plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz f2', 'color', '#3d00ff')
+plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz f2', 'color', '#00ff00')
 title('Analytical solution (Helmholtz) at the screen at $x=L=10^{-6}$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-ylabel('Intensity $I$','Interpreter','latex')
+ylabel('Intensity $I$ (normalized)','Interpreter','latex')
 xlim([0, h/2])
 legend()
 
@@ -262,44 +262,44 @@ legend()
 
 %% componentwise comparison (for f1)
 figure
-plot(y, I1_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
+plot(y, I1_helmholtz, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Helmholtz')
 hold on
-plot(y, I_f1, 'DisplayName', 'Numeric', 'color', '#D95319')
+plot(y, I_f1, 'DisplayName', 'Numeric', 'color', '#3d00ff')
 hold on
-scatter(d_max_f1, zeros(max(size(d_max_f1)),1),'filled', 'DisplayName', 'max', 'color', 'green');
+scatter(d_max_f1, zeros(max(size(d_max_f1)),1),'filled', 'DisplayName', 'max');
 hold on;
-scatter(d_min_f1, zeros(max(size(d_min_f1)),1),'DisplayName', 'min', 'color', 'green');
+scatter(d_min_f1, zeros(max(size(d_min_f1)),1),'DisplayName', 'min');
 title('Comparison Helmholtz and Numeric solution for $f_1$','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-ylabel('Intensity $I$','Interpreter','latex')
+ylabel('Intensity $I$ (normalized)','Interpreter','latex')
 xlim([0, h/2])
 legend()
 
 
 %% componentwise comparison (for f2)
 figure
-plot(y, I2_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
+plot(y, I2_helmholtz, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Helmholtz')
 hold on
-plot(y, I_f2, 'DisplayName', 'Numeric', 'color', '#D95319')
+plot(y, I_f2, 'DisplayName', 'Numeric', 'color', '#00ff00')
 hold on
-scatter(d_max_f2, zeros(max(size(d_max_f2)),1),'filled', 'DisplayName', 'max', 'color', 'green');
+scatter(d_max_f2, zeros(max(size(d_max_f2)),1),'filled', 'DisplayName', 'max');
 hold on;
-scatter(d_min_f2, zeros(max(size(d_min_f2)),1),'DisplayName', 'min', 'color', 'green');
+scatter(d_min_f2, zeros(max(size(d_min_f2)),1),'DisplayName', 'min');
 title('Comparison Helmholtz and Numeric solution for $f_2$','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-ylabel('Intensity $I$','Interpreter','latex')
+ylabel('Intensity $I$ (normalized)','Interpreter','latex')
 xlim([0, h/2])
 legend()
 
 
 %% combined wave comparison
 figure
-plot(y, I_sum, 'DisplayName', 'Numerical', 'color', '#D95319')
+plot(y, I_sum, 'DisplayName', 'Numerical', 'color', '#1e8080')
 hold on
-plot(y, Isum_helmholtz, 'DisplayName', 'Helmholtz', 'color', '#3d00ff')
+plot(y, Isum_helmholtz, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Helmholtz')
 title('Intensity combined waves at $x=L=10^{-6}$m','Interpreter','latex')
 xlabel('Position at the screen $y$ (m)','Interpreter','latex')
-ylabel('Intensity $I$','Interpreter','latex')
+ylabel('Intensity $I$ (normalized)','Interpreter','latex')
 xlim([0, h/2])
 legend()
 
