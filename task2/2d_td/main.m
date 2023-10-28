@@ -97,15 +97,13 @@ ebow_bc(idx_bc) = 1;
 %% Apply bc and create matrices
 [bc, W, ebow_bc, jsbow] = apply_bc(msh, bc, ebow_bc, jsbow_bc);
 [MAT, bc] = generate_MAT(msh, bc, material_regions, ["CurlP"]);
-%NEW
 MAT = conductivePML_2D(bc, msh, MAT, f1);
 MAT.mepsi = nullInv(MAT.meps);
-[mur_edges,mur_n_edges, mur_deltas] = initMur_2D(msh, bc);
 
 % TD params
 dt = CFL(msh, MAT);
 t_spread = sqrt((1/2*h)^2 + L^2)/c;
-tend = t_spread + 3/f1;
+tend = t_spread + 5/f1;
 nt = ceil(tend/dt);
 
 % Excitation
@@ -130,13 +128,7 @@ for i = 1:nt
     e_exi_new = ebow_exi_f1(t+1);
 
     % Calc leapfrog
-    %NEW
-    %[ebow_new, hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
-
-
-    % Apply open boundary with mur cond
-    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
 
     % Save ebow and hbow
     ebow(:,i+1) = ebow_new;
@@ -181,12 +173,7 @@ for i = 1:nt
     e_exi_new = ebow_exi_f2(t+1);
 
     % Calc leapfrog
-    %NEW
-    %[ebow_new, hbow_new] = solve_leapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.c,dt,W);
-     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
-
-    % Apply open boundary with mur cond
-    ebow_new = applyMur_2D(mur_edges, mur_n_edges, mur_deltas, ebow_old, ebow_new, dt, bc);
+    [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
 
     % Save ebow and hbow
     ebow(:,i+1) = ebow_new;
