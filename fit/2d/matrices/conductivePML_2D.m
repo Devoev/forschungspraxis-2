@@ -7,12 +7,9 @@ function [MAT] = conductivePML_2D(bc, msh, MAT, f)
 %                    where to set an open boundary and the size of the PML
 %                    layer in cells. Example:
 %                    bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];
-%                    bc.NPML = [1,1,1,1]*3*elem_per_wavelength;
+%                    bc.NPML = [1,1,1,1]*6*elem_per_wavelength;
 %                    Recommended is a width of 6 wavelengths per PML layer
 %                    regarding the longest wavelength simulated.
-%                    Therefore, the cells in the given example have duoble
-%                    the edge length in the PML region compared to normal
-%                    regions
 % msh               -2D mesh object
 % MAT               -MAT object containg all relevant matrices
 % f                 -Excitation frequency
