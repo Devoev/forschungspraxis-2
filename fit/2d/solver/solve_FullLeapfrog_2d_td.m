@@ -1,4 +1,4 @@
-function [ebow_new,hbow_new]=solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,mmui,mepsi,kaps,c,dt,W)
+function [ebow_new,hbow_new]=solve_FullLeapfrog_2d_td(ebow_old,hbow_old,~,e_exi_new,jsbow,mmui,mepsi,kaps,c,dt,W)
 % solve_FullLeapfrog_2d_td executes an explicit time integration step 
 % utilizing the leapfrog algorithmn including a conductivity matrix
 %
@@ -27,10 +27,10 @@ function [ebow_new,hbow_new]=solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_ol
 
 
     % Berechnen der neuen magnetischen Spannung
-    hbow_new = hbow_old - dt*mmui*c* (e_exi_old + W*W'*ebow_old);
+    hbow_new = hbow_old - dt*mmui*c* ebow_old;
     
     % Berechnen der neuen elektrischen Spannung
-    ebow_new = (e_exi_old + W*W'*ebow_old) + dt*mepsi*(c'*hbow_new - kaps * ebow_old - jsbow);
+    ebow_new = ebow_old + dt*mepsi*(c'*hbow_new - kaps * ebow_old - jsbow);
     ebow_new = e_exi_new + W*W'*ebow_new;
 
 

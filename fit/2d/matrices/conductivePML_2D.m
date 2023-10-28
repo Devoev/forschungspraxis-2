@@ -1,4 +1,4 @@
-function [MAT] = conductivePML_2D(bc, msh, MAT, fmin)
+function [MAT] = conductivePML_2D(bc, msh, MAT, f)
 % conductivePML_2D creates a conductivity matrix, creating an absorbing
 % boundary for a given domain
 %
@@ -15,7 +15,7 @@ function [MAT] = conductivePML_2D(bc, msh, MAT, fmin)
 %                    regions
 % msh               -2D mesh object
 % MAT               -MAT object containg all relevant matrices
-% fmin              -Minimal excitation frequency
+% f                 -Excitation frequency
 %
 % Output
 % MAT               -MAT object, now including a conductivity matrix
@@ -27,7 +27,7 @@ nx = msh.nx;
 ny = msh.ny;
 
 % Calculate basic value for PML conductivity
-kappa = 0.01 * 2 * pi * fmin * MAT.epsilon0;
+kappa = 0.01 * 2 * pi * f * MAT.epsilon0;
 
 % Counter for kth box
 k = 1;

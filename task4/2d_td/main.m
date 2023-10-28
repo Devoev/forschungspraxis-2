@@ -51,10 +51,10 @@ func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 %% Define important parameters for all simulations
 
 % Polarization: 1 for z and 2 for y
-polarization = 2;
+polarization = 1;
 
 % Elements per wavelength
-elem_per_wavelength = 7;
+elem_per_wavelength = 10;
 
 
 %% PART 2: Single Slit
@@ -68,8 +68,8 @@ elem_per_wavelength = 7;
 %% Define important parameters for the simulation
 
 % Offset in each direction in elements
-offset = [0,3,3,3]*4*elem_per_wavelength+5;
-bc.NPML = offset-5;
+offset = [0,1,1,1]*4*elem_per_wavelength;
+bc.NPML = offset-3;
 
 % Edit boundary conditions
 if polarization == 1
@@ -81,13 +81,13 @@ end
 
 %% Edit basic calculation domain 
 
-% Distance in x-direction
+% Distance in x-direction in micro meter
 L = 10;
 
-% Screen height
+% Screen height in micro meter
 h = 40;
 
-% Width of slit
+% Width of slit in micro meter
 delta = 1;
 
 % Define maximal edge lenth in the mesh
@@ -198,7 +198,7 @@ material_regions.boxesMuiR = boxesMuiR;
 
 %% Calculate conductivity matrix for conductive PML (open boundary)
 
-[MAT] = conductivePML_2D(bc, msh, MAT, f2);
+[MAT] = conductivePML_2D(bc, msh, MAT, f1);
 
 
 %% Set up parameters for the simulation in time domain for excitation 1 
@@ -237,7 +237,7 @@ for t = 0:dt:t_end
 
     % Calculate value for excitation
     e_exi_old = e_exi * func_exi_1(t);
-    e_exi_new = e_exi * func_exi_1(t+1);
+    e_exi_new = e_exi * func_exi_1(t+dt);
 
     % Execute timestep with leapfrog
     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
@@ -311,6 +311,11 @@ title('Intensity on screen for wavelength 430nm - Single slit');
 drawnow
 
 
+%% Calculate conductivity matrix for conductive PML (open boundary)
+
+[MAT] = conductivePML_2D(bc, msh, MAT, f2);
+
+
 %% Set up parameters for the simulation in time domain for excitation 2 
 
 % Time step size
@@ -344,7 +349,7 @@ for t = 0:dt:t_end
 
     % Calculate value for excitation
     e_exi_old = e_exi * func_exi_2(t);
-    e_exi_new = e_exi * func_exi_2(t+1);
+    e_exi_new = e_exi * func_exi_2(t+dt);
 
     % Execute timestep with leapfrog
     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
@@ -451,11 +456,11 @@ clear MAT  material_regions offset bc boxesKappa;
 %% Define important parameters for the simulation
 
 % Offset in each direction in wavelengths
-offset = [1,1,1,1]*4*elem_per_wavelength+5;
+offset = [1,1,1,1]*4*elem_per_wavelength;
 
 % Edit boundary conditions
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];
-bc.NPML = offset-5;
+bc.NPML = offset-3;
 
 
 %% Edit basic calculation domain 
@@ -598,7 +603,7 @@ material_regions.boxesMuiR = boxesMuiR;
 
 %% Apply open boundary condition with conducting PML boundary
 
-MAT = conductivePML_2D(bc, msh, MAT, f2);
+MAT = conductivePML_2D(bc, msh, MAT, f1);
 
 
 %% Set up parameters for the simulation in time domain for excitation 1
@@ -637,7 +642,7 @@ for t = 0:dt:t_end
 
     % Calculate value for excitation
     e_exi_old = e_exi * func_exi_1(t);
-    e_exi_new = e_exi * func_exi_1(t+1);
+    e_exi_new = e_exi * func_exi_1(t+dt);
 
     % Execute timestep with leapfrog
     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
@@ -712,6 +717,11 @@ title('Intensity on screen for wavelength 430nm - Double slit');
 drawnow
 
 
+%% Calculate conductivity matrix for conductive PML (open boundary)
+
+[MAT] = conductivePML_2D(bc, msh, MAT, f2);
+
+
 %% Set up parameters for the simulation in time domain for excitation 2
 
 % Time step size
@@ -745,7 +755,7 @@ for t = 0:dt:t_end
 
     % Calculate value for excitation
     e_exi_old = e_exi * func_exi_2(t);
-    e_exi_new = e_exi * func_exi_2(t+1);
+    e_exi_new = e_exi * func_exi_2(t+dt);
 
     % Execute timestep with leapfrog
     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);

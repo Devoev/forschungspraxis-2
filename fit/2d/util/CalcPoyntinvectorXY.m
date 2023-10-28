@@ -167,6 +167,6 @@ Sx(n_subdom) = Ey .* conj(Hz) - Ez .* conj(Hy);
 S = [Sy; Sx; zeros(np,1)];
 
 % Multiply with 0.5, if imaginary
-if isreal(Sy) == false
+if isreal(S) == false
     S = 1/2 *S;
 end
