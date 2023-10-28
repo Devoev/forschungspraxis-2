@@ -68,7 +68,7 @@ elem_per_wavelength = 7;
 %% Define important parameters for the simulation
 
 % Offset in each direction in elements
-offset = [0,3,3,3]*4*elem_per_wavelength;
+offset = [0,3,3,3]*4*elem_per_wavelength+5;
 bc.NPML = offset-5;
 
 % Edit boundary conditions
