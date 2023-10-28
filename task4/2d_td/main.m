@@ -68,7 +68,7 @@ elem_per_wavelength = 10;
 %% Define important parameters for the simulation
 
 % Offset in each direction in elements
-offset = [0,1,1,1]*4*elem_per_wavelength;
+offset = [0,1,1,1]*8*elem_per_wavelength;
 bc.NPML = offset-3;
 
 % Edit boundary conditions
@@ -103,14 +103,14 @@ points_x = num_e * L + 1;
 points_y = num_e * h/2 + 1;
 
 % Calculate xmesh with respect to the choosen offset
-x_offset1 = (-offset(4):-1) * 2 * le;
-x_offset2 = L * 1e-6 + (1:offset(2)) * 2 * le;
+x_offset1 = (-offset(4):-1) * le;
+x_offset2 = L * 1e-6 + (1:offset(2)) * le;
 x_basic = linspace(0, L * 1e-6, points_x);
 xmesh = [x_offset1, x_basic, x_offset2];
 
 % Calculate ymesh with respect to the choosen offset
-y_offset1 = (-offset(1):-1) * 2 * le;
-y_offset2 = h/2 * 1e-6 + (1:offset(3)) * 2 * le;
+y_offset1 = (-offset(1):-1) * le;
+y_offset2 = h/2 * 1e-6 + (1:offset(3)) * le;
 y_basic = linspace(0, h/2 * 1e-6, points_y);
 ymesh = [y_offset1, y_basic, y_offset2];
 
@@ -456,7 +456,7 @@ clear MAT  material_regions offset bc boxesKappa;
 %% Define important parameters for the simulation
 
 % Offset in each direction in wavelengths
-offset = [1,1,1,1]*4*elem_per_wavelength;
+offset = [1,1,1,1]*8*elem_per_wavelength;
 
 % Edit boundary conditions
 bc.bc = ["OPEN", "OPEN", "OPEN", "OPEN"];
