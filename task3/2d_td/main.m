@@ -440,5 +440,5 @@ error_x0 = norm((S_ex1(n_screen_0) + S_ex2(n_screen_0)) - (S1_f1 + S1_f2)) / nor
 error_xL = norm((S_ex1(n_screen_L) + S_ex2(n_screen_L)) - (S3_f1 + S3_f2)) / norm(S3_f1 + S3_f2);
 
 % Display errors
-disp(['Relative error of intensity at screen at x = 0: ', num2str(error_x0)]);
-disp(['Relative error of intensity at screen at x = L: ', num2str(error_xL)]);
+disp(['Relative error of combined intensity at screen at x = 0: ', num2str(error_x0)]);
+disp(['Relative error of combined intensity at screen at x = L: ', num2str(error_xL)]);
