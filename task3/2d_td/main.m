@@ -46,7 +46,7 @@ func_exi_2  = @(t)(E2 * sin(2*pi*f2*t));
 polarization = 2;
 
 % Elements per wavelength
-elem_per_wavelength = 20;
+elem_per_wavelength = 16;
 
 % Offset in each direction
 offset = [0,8,0,12]*elem_per_wavelength;

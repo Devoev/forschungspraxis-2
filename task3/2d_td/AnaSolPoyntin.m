@@ -19,6 +19,6 @@ d = abs(2 * Ze / (Ze + Z1));
 S1 = 0.5 * E0 * conj(E0) / Z1 * (1 - r^2);
 
 % Calculate Poyntinvector in space after the film
-S3 = real(0.5 * d^2 * E0 * conj(E0) / Ze);
+S3 = real(0.5 * d^2 * E0 * conj(E0) / conj(Ze));
 
 end
