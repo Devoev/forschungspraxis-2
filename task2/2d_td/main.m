@@ -125,7 +125,7 @@ for i = 1:nt
     ebow_old = ebow(:,i);
     hbow_old = hbow(:,i);
     e_exi_old = ebow_exi_f1(t);
-    e_exi_new = ebow_exi_f1(t+1);
+    e_exi_new = ebow_exi_f1(t+dt);
 
     % Calc leapfrog
     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
@@ -170,7 +170,7 @@ for i = 1:nt
     ebow_old = ebow(:,i);
     hbow_old = hbow(:,i);
     e_exi_old = ebow_exi_f2(t);
-    e_exi_new = ebow_exi_f2(t+1);
+    e_exi_new = ebow_exi_f2(t+dt);
 
     % Calc leapfrog
     [ebow_new,hbow_new] = solve_FullLeapfrog_2d_td(ebow_old,hbow_old,e_exi_old,e_exi_new,jsbow,MAT.mmui,MAT.mepsi,MAT.kaps,MAT.c,dt,W);
