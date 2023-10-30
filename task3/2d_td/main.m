@@ -10,15 +10,18 @@ filePath = matlab.desktop.editor.getActiveFilename;
 [parent] = fileparts(filePath);
 parent = fileparts(parent) ;
 parent = fileparts(parent);
+parent = '..';
 
 % Paths to add
 path_msh_func = append(parent, '\fit\2d\mesh');
 path_mat_func = append(parent, '\fit\2d\matrices');
 path_solver_func = append(parent, '\fit\2d\solver');
 path_util_func = append(parent, '\fit\2d\util');
+path_task3 = append(parent, '\task3\2d_td');
 
 % Add paths
-addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func)
+cd('../')
+addpath(path_msh_func, path_mat_func, path_solver_func, path_util_func, path_task3)
 
 
 %% Define excitation
