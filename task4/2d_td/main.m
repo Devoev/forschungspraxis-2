@@ -402,7 +402,7 @@ I2_num = S_ex2(n_screen + np);
 
 % Plot avarage power on screen over associated y-coordinates
 figure(4)
-plot(y_coord_screen_single, I2_num, 'Color', [0 1 1], LineWidth=1.5);
+plot(y_coord_screen_single, I2_num, 'Color', [0 1 0], LineWidth=1.5);
 hold on;
 plot(y_coord_screen_single, I2_ana, 'Color', [0 0 0], LineWidth=1.5, LineStyle='--');
 scatter(bright, zeros(max(size(bright)),1), "green", 'filled');
@@ -429,7 +429,7 @@ I_combine = I1_num + I2_num;
 figure(5)
 plot(y_coord_screen_single, I1_num, 'Color', [.5 0 .5], 'LineWidth', 2);
 hold on;
-plot(y_coord_screen_single, I2_num, 'Color', [0 1 1], 'LineWidth', 2);
+plot(y_coord_screen_single, I2_num, 'Color', [0 1 0], 'LineWidth', 2);
 hold on;
 plot(y_coord_screen_single, I_combine, 'Color', [0 0 0], 'LineStyle','--', LineWidth=1.5);
 grid on;
@@ -814,7 +814,7 @@ I2_double_single = I21 + I22 + 2 * I21.^0.5 .* I22.^0.5;
 
 % Plot avarage power on screen over associated y-coordinates
 figure(9)
-plot(y_coord_screen_double, I2d_num, 'Color', [0 1 1], LineWidth=1.5);
+plot(y_coord_screen_double, I2d_num, 'Color', [0 1 0], LineWidth=1.5);
 hold on;
 plot(y_coord_screen_double, I2_double_single, 'Color', [0 0 0], 'LineStyle','--', LineWidth=1.5);
 hold on;
@@ -831,7 +831,7 @@ envelope_combine = I1_double_single + I2_double_single;
 figure(10)
 plot(y_coord_screen_double, I1d_num, 'Color', [.5 0 .5], 'LineWidth', 2);
 hold on;
-plot(y_coord_screen_double, I2d_num, 'Color', [0 1 1], 'LineWidth', 2);
+plot(y_coord_screen_double, I2d_num, 'Color', [0 1 0], 'LineWidth', 2);
 hold on;
 plot(y_coord_screen_double, Id_combine, 'Color', [0 0 0], 'LineStyle','--', LineWidth=1.5);
 grid on;
